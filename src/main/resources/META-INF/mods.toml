@@ -1,0 +1,38 @@
+modLoader="javafml"
+license="MIT License, Copyright (c) 2019 simibubi, Copyright 2022 MRH0, Copyright (c) 2023 Zeh Maria"
+loaderVersion="[43,)"
+issueTrackerURL="https://github.com/zehmaria/createpickywheels/issues"
+displayURL="https://github.com/zehmaria/createpickywheels"
+logoFile="cpw_logo.png"
+
+[[mods]]
+    modId="createpickywheels"
+    version="${file.jarVersion}"
+    displayName="Create Picky Wheels"
+	authors="zeh_maria"
+    description="Changing Waterwheels generation requirements: Large body of water + River Biomes."
+
+[[dependencies.createpickywheels]]
+    modId="forge"
+    mandatory=true
+    versionRange="[43.2.11,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.createpickywheels]]
+    modId="create"
+    mandatory=true
+    versionRange="[0.5.1.b,0.6.0)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.createpickywheels]]
+    modId="flywheel"
+    mandatory=true
+    versionRange="[0.6,0.7)"
+    ordering="AFTER"
+    side="CLIENT"
+[[dependencies.createpickywheels]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.19.2,1.20)"
+    ordering="NONE"
+    side="BOTH"
