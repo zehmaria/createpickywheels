@@ -12,12 +12,17 @@ buildscript {
     }
 }
 
+plugins {
+    id 'com.matthewprenger.cursegradle' version "${cursegradle_version}"
+}
+
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
+apply plugin: 'com.matthewprenger.cursegradle'
+//apply plugin: 'maven-publish'
 apply plugin: "org.spongepowered.mixin"
+apply plugin: 'idea'
 
 mixin {
     add sourceSets.main, 'createpickywheels.refmap.json'
@@ -73,7 +78,10 @@ minecraft {
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    exclude '.cache/'
+}
 
 repositories {
     maven {
@@ -104,7 +112,17 @@ dependencies {
     implementation fg.deobf("com.jozufozu.flywheel:flywheel-forge-${flywheel_minecraft_version}:${flywheel_version}")
     implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
 
-    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    if (System.getProperty('idea.sync.active') != 'true') {
+        annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+compileJava {
+    options.compilerArgs = ['-Xdiags:verbose']
 }
 
 jar {
@@ -121,3 +139,7 @@ jar {
         ])
     }
 }
+
+// Example configuration to allow publishing using the maven-publish plugin
+// This is the preferred method to reobfuscate your jar file
+jar.finalizedBy('reobfJar')
