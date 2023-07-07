@@ -1,9 +1,9 @@
 modLoader="javafml"
 license="MIT"
-loaderVersion="[43,)"
+loaderVersion="[47,)"
 issueTrackerURL="https://github.com/zehmaria/createpickywheels/issues"
 displayURL="https://github.com/zehmaria/createpickywheels"
-logoFile="cpw_logo.png"
+logoFile="logo.png"
 
 [[mods]]
     modId="createpickywheels"
@@ -15,24 +15,24 @@ logoFile="cpw_logo.png"
 [[dependencies.createpickywheels]]
     modId="forge"
     mandatory=true
-    versionRange="[43.2.11,)"
+    versionRange="[47.0.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.createpickywheels]]
     modId="create"
     mandatory=true
-    versionRange="[0.5.1.b,0.6.0)"
+    versionRange="[0.5.1.a,0.6.0)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.createpickywheels]]
     modId="flywheel"
     mandatory=true
-    versionRange="[0.6,0.7)"
+    versionRange="[0.6.9,0.6.10)"
     ordering="AFTER"
     side="CLIENT"
 [[dependencies.createpickywheels]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19.2,1.20)"
+    versionRange="[1.20,1.21)"
     ordering="NONE"
     side="BOTH"
