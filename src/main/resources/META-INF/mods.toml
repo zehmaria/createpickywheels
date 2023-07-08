@@ -21,15 +21,9 @@ logoFile="cpw_logo.png"
 [[dependencies.createpickywheels]]
     modId="create"
     mandatory=true
-    versionRange="[0.5.1.b,0.6.0)"
+    versionRange="[0.5.1.a,0.6.0)"
     ordering="NONE"
     side="BOTH"
-[[dependencies.createpickywheels]]
-    modId="flywheel"
-    mandatory=true
-    versionRange="[0.6,)"
-    ordering="AFTER"
-    side="CLIENT"
 [[dependencies.createpickywheels]]
     modId="minecraft"
     mandatory=true
