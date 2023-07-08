@@ -15,8 +15,8 @@ logoFile="cpw_logo.png"
 [[dependencies.createpickywheels]]
     modId="forge"
     mandatory=true
-    versionRange="[43.2.11,)"
     ordering="NONE"
+    versionRange="[43.2.0,)"
     side="BOTH"
 [[dependencies.createpickywheels]]
     modId="create"
@@ -27,7 +27,7 @@ logoFile="cpw_logo.png"
 [[dependencies.createpickywheels]]
     modId="flywheel"
     mandatory=true
-    versionRange="[0.6,0.7)"
+    versionRange="[0.6,)"
     ordering="AFTER"
     side="CLIENT"
 [[dependencies.createpickywheels]]
