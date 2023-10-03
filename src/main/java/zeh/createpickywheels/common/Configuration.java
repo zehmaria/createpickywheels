@@ -8,9 +8,12 @@ public class Configuration {
 
     public static ForgeConfigSpec COMMON_CONFIG;
 
+	public static ForgeConfigSpec.BooleanValue WATERWHEELS_ENABLED;
 	public static ForgeConfigSpec.IntValue WATERWHEELS_THRESHOLD;
 	public static ForgeConfigSpec.IntValue WATERWHEELS_RANGE;
 
+
+	public static ForgeConfigSpec.BooleanValue WINDMILLS_ENABLED;
 	public static ForgeConfigSpec.IntValue WINDMILLS_THRESHOLD;
 	public static ForgeConfigSpec.IntValue WINDMILLS_REQUIRED_RANGE;
 
@@ -25,6 +28,10 @@ public class Configuration {
 		ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
 
 	    COMMON_BUILDER.comment("#Waterwheel requirements").push("waterwheels");
+
+		WATERWHEELS_ENABLED = COMMON_BUILDER.comment("Enable waterwheels modifications?")
+				.define("waterwheelsEnabled", true);
+
 	    WATERWHEELS_THRESHOLD = COMMON_BUILDER.comment("The minimum amount of fluid blocks the waterwheel needs to find before rotation begins.")
 				.defineInRange("waterwheelThreshold", 3200, 1, Integer.MAX_VALUE);
 
@@ -34,6 +41,10 @@ public class Configuration {
 		COMMON_BUILDER.pop();
 
 		COMMON_BUILDER.comment("#Windmill requirements").push("windmills");
+
+		WINDMILLS_ENABLED = COMMON_BUILDER.comment("Enable windmills modifications?")
+				.define("windmillsEnabled", true);
+
 		WINDMILLS_THRESHOLD = COMMON_BUILDER.comment("The minimum floor area required. Default: 1/4 of the max area [PI * 32 ^ 2]")
 				.defineInRange("windmillThreshold", 804, 1, Integer.MAX_VALUE);
 
