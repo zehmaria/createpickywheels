@@ -11,6 +11,7 @@ import com.simibubi.create.foundation.ponder.PonderStoryBoardEntry.PonderStoryBo
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import zeh.createpickywheels.common.Configuration;
 
 @Mixin(value = PonderRegistrationHelper.class, remap = false)
 public abstract class PonderRegistrationHelperMixin {
@@ -29,6 +30,7 @@ public abstract class PonderRegistrationHelperMixin {
     protected void replaceSchematics(ItemProviderEntry<?> component, String schematicPath, PonderStoryBoard storyBoard,
                                   PonderTag[] tags, CallbackInfoReturnable<PonderStoryBoardEntry> cir) {
         if (schematicPath.equals("large_water_wheel") || schematicPath.equals("water_wheel")) {
+            if (!Configuration.WATERWHEELS_ENABLED.get()) return;
             cir.setReturnValue(addStoryBoard(component, asLocation(schematicPath + '2'), storyBoard, tags));
         }
     }

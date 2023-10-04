@@ -2,10 +2,9 @@ package zeh.createpickywheels.mixin;
 
 import com.simibubi.create.foundation.item.TooltipHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,44 +39,66 @@ import java.util.*;
 public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockEntity {
 
 	private WaterWheelBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) { super(type, pos, state); }
-	private boolean infinite = false;
-	boolean inBiome = false;
-	boolean hasValidSource = false;
-	boolean isLava = false;
+	@Unique
+	private boolean createPickyWheels$infinite = false;
+	@Unique
+	boolean createPickyWheels$inBiome = false;
+	@Unique
+	boolean createPickyWheels$hasValidSource = false;
+	@Unique
+	boolean createPickyWheels$isLava = false;
 
-	public BlockPos root;
+	@Unique
+	public BlockPos createPickyWheels$root;
 
-	private final int searchedPerTick = 640;
-	List<BlockPosEntry> frontier = new ArrayList<>();
-	Set<BlockPos> visited = new HashSet<>();
+	@Unique
+	private final int createPickyWheels$searchedPerTick = 640;
+	@Unique
+	List<BlockPosEntry> createPickyWheels$frontier = new ArrayList<>();
+	@Unique
+	Set<BlockPos> createPickyWheels$visited = new HashSet<>();
 
-	int revalidateIn = 1;
+	@Unique
+	int createPickyWheels$revalidateIn = 1;
 
-	List<BlockPos> powerSource = new ArrayList<>();
+	@Unique
+	List<BlockPos> createPickyWheels$powerSource = new ArrayList<>();
 
-	protected int validationTimer() {
-		int maxBlocks = maxBlocks();
+	@Unique
+	protected int createPickyWheels$validationTimer() {
+		int maxBlocks = createPickyWheels$maxBlocks();
 		// Allow enough time for the server's infinite block threshold to be reached
 		int validationTimerMin = 200;
-		return maxBlocks < 0 ? validationTimerMin : Math.max(validationTimerMin, maxBlocks / searchedPerTick + 1);
+		return maxBlocks < 0 ? validationTimerMin : Math.max(validationTimerMin, maxBlocks / createPickyWheels$searchedPerTick + 1);
 	}
-	protected void setValidationTimer() { revalidateIn = validationTimer(); }
-	protected void setLongValidationTimer() { revalidateIn = validationTimer() * 2; }
-	protected int maxRange() { return Configuration.WATERWHEELS_RANGE.get(); }
-	protected int maxBlocks() { return Configuration.WATERWHEELS_THRESHOLD.get(); }
+	@Unique
+	protected void createPickyWheels$setValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer(); }
+	@Unique
+	protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 2; }
+	@Unique
+	protected int createPickyWheels$maxRange() { return Configuration.WATERWHEELS_RANGE.get(); }
+	@Unique
+	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_THRESHOLD.get(); }
+	@Unique
+	protected boolean createPickyWheels$enabled() { return Configuration.WATERWHEELS_ENABLED.get(); }
 
-	public void reset() {
-		setValidationTimer();
-		frontier.clear();
-		visited.clear();
-		infinite = false;
+	@Unique
+	public void createPickyWheels$reset() {
+		createPickyWheels$setValidationTimer();
+		createPickyWheels$frontier.clear();
+		createPickyWheels$visited.clear();
+		createPickyWheels$infinite = false;
 		sendData();
 	}
 
 	@Override
-	public void destroy() { reset(); super.destroy(); }
+	public void destroy() {
+		if (createPickyWheels$enabled()) createPickyWheels$reset();
+		super.destroy();
+	}
 
-	protected String canPullFluidsFrom(BlockState blockState, BlockPos pos) {
+	@Unique
+	protected String createPickyWheels$canPullFluidsFrom(BlockState blockState, BlockPos pos) {
 		if (blockState.hasProperty(BlockStateProperties.WATERLOGGED) && blockState.getValue(BlockStateProperties.WATERLOGGED)) return "SOURCE";
 		if (blockState.getBlock() instanceof LiquidBlock) return blockState.getValue(LiquidBlock.LEVEL) == 0 ? "SOURCE" : "FLOWING";
 		if (level != null && blockState.getFluidState().getType() != Fluids.EMPTY && blockState.getCollisionShape(level, pos, CollisionContext.empty()).isEmpty()) {
@@ -86,12 +107,13 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		return "NONE";
 	}
 
-	protected void search(Fluid fluid, List<BlockPosEntry> frontier, Set<BlockPos> visited) throws ChunkNotLoadedException {
-		int maxBlocks = maxBlocks();
-		int maxRange = maxRange();
+	@Unique
+	protected void createPickyWheels$search(Fluid fluid, List<BlockPosEntry> frontier, Set<BlockPos> visited) throws ChunkNotLoadedException {
+		int maxBlocks = createPickyWheels$maxBlocks();
+		int maxRange = createPickyWheels$maxRange();
 		int maxRangeSq = maxRange * maxRange;
 
-		for (int i = 0; i < searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks); i++) {
+		for (int i = 0; i < createPickyWheels$searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks); i++) {
 			BlockPosEntry entry = frontier.remove(0);
 			BlockPos currentPos = entry.pos();
 			if (visited.contains(currentPos)) continue; else visited.add(currentPos);
@@ -105,72 +127,75 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 			for (Direction side : Iterate.directions) {
 				BlockPos offsetPos = currentPos.relative(side);
 				if (!level.isLoaded(offsetPos)) throw new ChunkNotLoadedException();
-				if (visited.contains(offsetPos) || offsetPos.distSqr(root) > maxRangeSq) continue;
+				if (visited.contains(offsetPos) || offsetPos.distSqr(createPickyWheels$root) > maxRangeSq) continue;
 				FluidState nextFluidState = level.getFluidState(offsetPos);
 				if (nextFluidState.isEmpty()) continue;
-				if (Objects.equals(canPullFluidsFrom(level.getBlockState(offsetPos), offsetPos), "SOURCE")) {
+				if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(offsetPos), offsetPos), "SOURCE")) {
 					frontier.add(new BlockPosEntry(offsetPos, entry.distance() + 1));
 				}
 			}
 		}
 	}
 
-	private void continueSearch(Fluid fluid) {
+	@Unique
+	private void createPickyWheels$continueSearch(Fluid fluid) {
 		try {
-			search(fluid, frontier, visited);
+			createPickyWheels$search(fluid, createPickyWheels$frontier, createPickyWheels$visited);
 		} catch (ChunkNotLoadedException e) {
 			sendData();
-			frontier.clear();
-			visited.clear();
-			setLongValidationTimer();
+			createPickyWheels$frontier.clear();
+			createPickyWheels$visited.clear();
+			createPickyWheels$setLongValidationTimer();
 			return;
 		}
-		int maxBlocks = maxBlocks();
-		if (visited.size() >= maxBlocks) {
-			frontier.clear();
-			if (!infinite) {
-				infinite = true;
-				visited.clear();
+		int maxBlocks = createPickyWheels$maxBlocks();
+		if (createPickyWheels$visited.size() >= maxBlocks) {
+			createPickyWheels$frontier.clear();
+			if (!createPickyWheels$infinite) {
+				createPickyWheels$infinite = true;
+				createPickyWheels$visited.clear();
 				sendData();
 				determineAndApplyFlowScore();
 			}
-			setLongValidationTimer();
+			createPickyWheels$setLongValidationTimer();
 			return;
 		}
-		if (!frontier.isEmpty()) return;
-		if (infinite) {
-			reset();
+		if (!createPickyWheels$frontier.isEmpty()) return;
+		if (createPickyWheels$infinite) {
+			createPickyWheels$reset();
 			determineAndApplyFlowScore();
 			return;
 		}
-		setValidationTimer();
+		createPickyWheels$setValidationTimer();
 		sendData();
-		visited.clear();
+		createPickyWheels$visited.clear();
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
+		if (!createPickyWheels$enabled()) return;
 		if (level == null || level.isClientSide()) return;
-		if (!inBiome || !hasValidSource) return;
-		if (!frontier.isEmpty() && level != null) {
-			Fluid fluid = level.getFluidState(root).getType();
-			if (fluid != Fluids.EMPTY) continueSearch(fluid);
+		if (!createPickyWheels$inBiome || !createPickyWheels$hasValidSource) return;
+		if (!createPickyWheels$frontier.isEmpty() && level != null) {
+			Fluid fluid = level.getFluidState(createPickyWheels$root).getType();
+			if (fluid != Fluids.EMPTY) createPickyWheels$continueSearch(fluid);
 			return;
 		}
-		if (revalidateIn > 0) revalidateIn--;
-		if (frontier.isEmpty() && revalidateIn == 0) {
-			visited.clear();
-			frontier.add(new BlockPosEntry(root, 0));
+		if (createPickyWheels$revalidateIn > 0) createPickyWheels$revalidateIn--;
+		if (createPickyWheels$frontier.isEmpty() && createPickyWheels$revalidateIn == 0) {
+			createPickyWheels$visited.clear();
+			createPickyWheels$frontier.add(new BlockPosEntry(createPickyWheels$root, 0));
 		}
 	}
 
-	public boolean isPowerSourceViable() {
-		if (getSize() == 1 && powerSource.size() == 1) return true;
-		if (getSize() == 2 && powerSource.size() <= 3  && powerSource.size() > 0) {
+	@Unique
+	public boolean createPickyWheels$isPowerSourceViable() {
+		if (getSize() == 1 && createPickyWheels$powerSource.size() == 1) return true;
+		if (getSize() == 2 && createPickyWheels$powerSource.size() <= 3  && !createPickyWheels$powerSource.isEmpty()) {
 			BlockPos first = null;
 			int check = 0, count;
-			for (BlockPos pos : powerSource) {
+			for (BlockPos pos : createPickyWheels$powerSource) {
 				count = 0;
 				if (first == null) first = pos;
 				if (first.getX() == pos.getX()) count++;
@@ -178,61 +203,66 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 				if (first.getZ() == pos.getZ()) count++;
 				if (count >= 2) check++;
 			}
-			return check == powerSource.size();
+			return check == createPickyWheels$powerSource.size();
 		}
 		return false;
 	}
 
-	public void determineViability() {
+	@Unique
+	public void createPickyWheels$determineViability() {
 		if (level == null) return;
 
-		inBiome = level.getBiome(worldPosition).is(PickyTags.PICKY_WATERWHEELS);
+		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.PICKY_WATERWHEELS);
 
-		powerSource.clear();
+		createPickyWheels$powerSource.clear();
 		for (BlockPos blockPos : getOffsetsToCheck()) {
 			BlockPos targetPos = blockPos.offset(worldPosition);
-			if (Objects.equals(canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
-				powerSource.add(targetPos);
-				isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
+			if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
+				createPickyWheels$powerSource.add(targetPos);
+				createPickyWheels$isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
 			}
 		}
-		root = powerSource.size() > 0 ? powerSource.get(0) : worldPosition;
-		hasValidSource = isPowerSourceViable();
+		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
+		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
 	}
 
-	/**
-	* @author ZehMaria
-	* @reason Changing Water Wheel to require a big body of water [like the Hose Pulley] and a River Biomes.
-	*/
-	@Overwrite
-	public void determineAndApplyFlowScore() {
-		determineViability();
-		setFlowScoreAndUpdate(inBiome && hasValidSource && infinite ? 1 : 0);
-		if (level != null && inBiome && hasValidSource && infinite && !level.isClientSide())
-			award(isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
+	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
+	private void determineAndApplyFlowScoreMixin(CallbackInfo ci) {
+		if (!createPickyWheels$enabled()) return;
+
+		createPickyWheels$determineViability();
+		setFlowScoreAndUpdate(createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite ? 1 : 0);
+		if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
+			award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
+
+		ci.cancel();
 	}
 
 	@Override
 	public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-		if (!inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_river");
-		if (!hasValidSource && inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
-		if (!infinite && inBiome && hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
+		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
+
+		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_river");
+		if (!createPickyWheels$hasValidSource && createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
+		if (!createPickyWheels$infinite && createPickyWheels$inBiome && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
 
 		return addToGoggleTooltip;
 	}
 	@Inject(method = "write", at = @At("TAIL"))
 	private void write(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
-		if (infinite) NBTHelper.putMarker(nbt, "Infinite");
-		if (inBiome) NBTHelper.putMarker(nbt, "InBiome");
-		if (hasValidSource) NBTHelper.putMarker(nbt, "HasValidSource");
+		if (!createPickyWheels$enabled()) return;
+		if (createPickyWheels$infinite) NBTHelper.putMarker(nbt, "Infinite");
+		if (createPickyWheels$inBiome) NBTHelper.putMarker(nbt, "InBiome");
+		if (createPickyWheels$hasValidSource) NBTHelper.putMarker(nbt, "HasValidSource");
 	}
 
 	@Inject(method = "read", at = @At("TAIL"))
 	private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
-		infinite = nbt.contains("Infinite");
-		inBiome = nbt.contains("InBiome");
-		hasValidSource = nbt.contains("HasValidSource");
+		if (!createPickyWheels$enabled()) return;
+		createPickyWheels$infinite = nbt.contains("Infinite");
+		createPickyWheels$inBiome = nbt.contains("InBiome");
+		createPickyWheels$hasValidSource = nbt.contains("HasValidSource");
 	}
 
 	@Shadow
@@ -241,9 +271,8 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Shadow
 	protected abstract int getSize();
 
-	@Shadow
+																																																																																@Shadow
 	protected abstract Set<BlockPos> getOffsetsToCheck();
 
-	@Shadow
-	public int flowScore;
+	@Shadow public abstract void determineAndApplyFlowScore();
 }

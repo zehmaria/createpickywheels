@@ -21,9 +21,11 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import zeh.createpickywheels.common.Configuration;
 import zeh.createpickywheels.common.PickyTags;
 import zeh.createpickywheels.common.util.BlockPosEntry;
@@ -33,57 +35,80 @@ import java.util.*;
 @Mixin(value = WindmillBearingBlockEntity.class, remap = false)
 public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingBlockEntity {
 
-    @Shadow public abstract void addBehaviours(List<BlockEntityBehaviour> behaviours);
-
     private WindmillBearingBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) { super(type, pos, state); }
 
-    private boolean hasFlow = false;
-    boolean isViable = false;
+    @Unique
+    private boolean createPickyWheels$hasFlow = false;
+    @Unique
+    boolean createPickyWheels$isViable = false;
 
-    public BlockPos root;
-    float flowScore = 0;
-    int currents = 0;
+    @Unique
+    public BlockPos createPickyWheels$root;
+    @Unique
+    float createPickyWheels$flowScore = 0;
+    @Unique
+    int createPickyWheels$currents = 0;
 
-    private final int searchedPerTick = 320;
-    List<BlockPosEntry> frontier = new ArrayList<>();
-    Set<BlockPos> visited = new HashSet<>();
+    @Unique
+    private final int createPickyWheels$searchedPerTick = 320;
+    @Unique
+    List<BlockPosEntry> createPickyWheels$frontier = new ArrayList<>();
+    @Unique
+    Set<BlockPos> createPickyWheels$visited = new HashSet<>();
 
-    int revalidateIn = 1;
-    int flowCheck = 1;
+    @Unique
+    int createPickyWheels$revalidateIn = 1;
+    @Unique
+    int createPickyWheels$flowCheck = 1;
 
-    protected int validationTimer() {
-        int maxBlocks = maxBlocks();
+    @Unique
+    protected int createPickyWheels$validationTimer() {
+        int maxBlocks = createPickyWheels$maxBlocks();
         // Allow enough time for the block threshold to be reached
         int validationTimerMin = 200;
-        return maxBlocks < 0 ? validationTimerMin : Math.max(validationTimerMin, maxBlocks / searchedPerTick + 1);
+        return maxBlocks < 0 ? validationTimerMin : Math.max(validationTimerMin, maxBlocks / createPickyWheels$searchedPerTick + 1);
     }
 
-    protected void setValidationTimer() { revalidateIn = validationTimer(); }
-    protected void setLongValidationTimer() { revalidateIn = validationTimer() * 2; }
-    protected int maxRange() { return Configuration.WINDMILLS_MAX_RANGE.get(); }
-    protected int requiredRange() { return Configuration.WINDMILLS_REQUIRED_RANGE.get(); }
-    protected int requiredRangePoints() { return Configuration.WINDMILLS_REQUIRED_RANGE_POINTS.get(); }
-    protected int maxBlocks() { return Configuration.WINDMILLS_THRESHOLD.get(); }
-    protected float aboveOf = 0;
+    @Unique
+    protected void createPickyWheels$setValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer(); }
+    @Unique
+    protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 2; }
+    @Unique
+    protected int createPickyWheels$maxRange() { return Configuration.WINDMILLS_MAX_RANGE.get(); }
+    @Unique
+    protected int createPickyWheels$requiredRange() { return Configuration.WINDMILLS_REQUIRED_RANGE.get(); }
+    @Unique
+    protected int createPickyWheels$requiredRangePoints() { return Configuration.WINDMILLS_REQUIRED_RANGE_POINTS.get(); }
+    @Unique
+    protected int createPickyWheels$maxBlocks() { return Configuration.WINDMILLS_THRESHOLD.get(); }
+    @Unique
+    protected boolean createPickyWheels$enabled() { return Configuration.WINDMILLS_ENABLED.get(); }
 
-    public void reset() {
-        setValidationTimer();
-        currents = 0;
-        frontier.clear();
-        visited.clear();
-        hasFlow = false;
+    @Unique
+    protected float createPickyWheels$aboveOf = 0;
+
+    @Unique
+    public void createPickyWheels$reset() {
+        createPickyWheels$setValidationTimer();
+        createPickyWheels$currents = 0;
+        createPickyWheels$frontier.clear();
+        createPickyWheels$visited.clear();
+        createPickyWheels$hasFlow = false;
         sendData();
     }
 
     @Override
-    public void destroy() { reset(); super.destroy(); }
-
-    protected void search(List<BlockPosEntry> frontier, Set<BlockPos> visited) throws FluidManipulationBehaviour.ChunkNotLoadedException {
+    public void destroy() {
+        if (createPickyWheels$enabled()) createPickyWheels$reset();
+        super.destroy();
+    }
+    @Unique
+    protected void createPickyWheels$search(List<BlockPosEntry> frontier, Set<BlockPos> visited) throws FluidManipulationBehaviour.ChunkNotLoadedException {
         if (level == null) return;
-        int maxBlocks = maxBlocks();
-        int maxRange = maxRange();
+        int maxBlocks = createPickyWheels$maxBlocks();
+        int maxRange = createPickyWheels$maxRange();
         int maxRangeSq = maxRange * maxRange;
-        int requiredRange = requiredRange();
+        int requiredRange = createPickyWheels$requiredRange();
         int requiredRangeSq = requiredRange * requiredRange;
 
         Axis axis = movedContraption.getRotationAxis();
@@ -92,11 +117,11 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         int sails = ((BearingContraption) movedContraption.getContraption()).getSailBlocks();
         float rh = Mth.sqrt(sails);
 
-        for (int i = 0; i < searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks || currents <= requiredRangePoints()); i++) {
+        for (int i = 0; i < createPickyWheels$searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks || createPickyWheels$currents <= createPickyWheels$requiredRangePoints()); i++) {
             BlockPosEntry entry = frontier.remove(0);
             BlockPos currentPos = entry.pos();
 
-            if (currentPos.distSqr(root) > requiredRangeSq) currents++;
+            if (currentPos.distSqr(createPickyWheels$root) > requiredRangeSq) createPickyWheels$currents++;
             if (visited.contains(currentPos)) continue; else visited.add(currentPos);
             if (!level.isLoaded(currentPos)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
 
@@ -108,7 +133,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
                 BlockPos offsetPos = currentPos.relative(side);
 
                 if (!level.isLoaded(offsetPos)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
-                if (visited.contains(offsetPos) || offsetPos.distSqr(root) > maxRangeSq) continue;
+                if (visited.contains(offsetPos) || offsetPos.distSqr(createPickyWheels$root) > maxRangeSq) continue;
                 if (level.getBlockState(offsetPos).isAir()) k++;
                 for (int j = 0; j <= rh; j++) {
                     BlockPos offsetA = offsetPos.relative(dirA);
@@ -132,87 +157,88 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         }
     }
 
-    private void continueSearch() {
+    @Unique
+    private void createPickyWheels$continueSearch() {
         try {
-            search(frontier, visited);
+            createPickyWheels$search(createPickyWheels$frontier, createPickyWheels$visited);
         } catch (FluidManipulationBehaviour.ChunkNotLoadedException e) {
             sendData();
-            currents = 0;
-            frontier.clear();
-            visited.clear();
-            setLongValidationTimer();
+            createPickyWheels$currents = 0;
+            createPickyWheels$frontier.clear();
+            createPickyWheels$visited.clear();
+            createPickyWheels$setLongValidationTimer();
             return;
         }
 
-        if (currents > requiredRangePoints() && visited.size() > maxBlocks()) {
-            currents = 0;
-            frontier.clear();
-            if (!hasFlow) {
-                hasFlow = true;
-                visited.clear();
+        if (createPickyWheels$currents > createPickyWheels$requiredRangePoints() && createPickyWheels$visited.size() > createPickyWheels$maxBlocks()) {
+            createPickyWheels$currents = 0;
+            createPickyWheels$frontier.clear();
+            if (!createPickyWheels$hasFlow) {
+                createPickyWheels$hasFlow = true;
+                createPickyWheels$visited.clear();
                 sendData();
-                determineAndApplyFlowScore();
+                createPickyWheels$determineAndApplyFlowScore();
             }
-            setLongValidationTimer();
+            createPickyWheels$setLongValidationTimer();
             return;
         }
-        if (!frontier.isEmpty()) return;
-        if (hasFlow) {
-            reset();
-            determineAndApplyFlowScore();
+        if (!createPickyWheels$frontier.isEmpty()) return;
+        if (createPickyWheels$hasFlow) {
+            createPickyWheels$reset();
+            createPickyWheels$determineAndApplyFlowScore();
             return;
         }
-        setValidationTimer();
+        createPickyWheels$setValidationTimer();
         sendData();
-        visited.clear();
+        createPickyWheels$visited.clear();
     }
 
-    /**
-     * @author ZehMaria
-     * @reason Changing Wind Mills to require enough space for air current to flow.
-     */
-    @Overwrite
-    public float getGeneratedSpeed() {
-        if (!running) return 0;
-        if (!hasFlow) return 0.0001F;
-        if (movedContraption == null) return lastGeneratedSpeed;
+    @Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
+    private void getGeneratedSpeed(CallbackInfoReturnable<Float> cir) {
+        if (!createPickyWheels$enabled()) return;
+
+        if (!running) { cir.setReturnValue(0F); return; }
+        if (!createPickyWheels$hasFlow) { cir.setReturnValue(0.0001F); return; }
+        if (movedContraption == null) { cir.setReturnValue(lastGeneratedSpeed); return; }
+
         int sails = ((BearingContraption) movedContraption.getContraption()).getSailBlocks()
                 / AllConfigs.server().kinetics.windmillSailsPerRPM.get();
         int aboveX = Configuration.WINDMILLS_ABOVEX.get();
-        return ((Mth.clamp(sails, 1, 16) + aboveX * aboveOf) * getAngleSpeedDirection());
+        cir.setReturnValue(((Mth.clamp(sails, 1, 16) + aboveX * createPickyWheels$aboveOf)
+                * getAngleSpeedDirection()));
+
+        cir.cancel();
     }
 
-    /**
-     * @author ZehMaria
-     * @reason Changing Wind Mills to require enough space for air current to flow.
-     */
-    @Overwrite
-    public void tick() {
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void tick(CallbackInfo ci) {
+        if (!createPickyWheels$enabled()) return;
+
         super.tick();
         if (level != null && level.isClientSide()) return;
-        tickToo();
+        createPickyWheels$tickToo();
 
         if (movedContraption == null) return;
-        if (flowCheck > 0) flowCheck--;
-        if (flowCheck == 0) determineAndApplyFlowScore();
+        if (createPickyWheels$flowCheck > 0) createPickyWheels$flowCheck--;
+        if (createPickyWheels$flowCheck == 0) createPickyWheels$determineAndApplyFlowScore();
 
-        if (!isViable) return;
-        if (!frontier.isEmpty() && level != null) {
-            continueSearch();
+        if (!createPickyWheels$isViable) return;
+        if (!createPickyWheels$frontier.isEmpty() && level != null) {
+            createPickyWheels$continueSearch();
             return;
         }
 
-        if (revalidateIn > 0) revalidateIn--;
-        if (frontier.isEmpty() && revalidateIn == 0) {
-            currents = 0;
-            visited.clear();
+        if (createPickyWheels$revalidateIn > 0) createPickyWheels$revalidateIn--;
+        if (createPickyWheels$frontier.isEmpty() && createPickyWheels$revalidateIn == 0) {
+            createPickyWheels$currents = 0;
+            createPickyWheels$visited.clear();
             for (Direction side : Iterate.directions) {
                 if (Iterate.directionsInAxis(movedContraption.getRotationAxis())[0] == side) continue;
                 if (Iterate.directionsInAxis(movedContraption.getRotationAxis())[1] == side) continue;
-                frontier.add(new BlockPosEntry(root.relative(side), 0));
+                createPickyWheels$frontier.add(new BlockPosEntry(createPickyWheels$root.relative(side), 0));
             }
 
-            int r = requiredRange(), x = root.getX(), z = root.getZ(), n = 0, h = 0;
+            int r = createPickyWheels$requiredRange(), x = createPickyWheels$root.getX(), z = createPickyWheels$root.getZ(), n = 0, h = 0;
             for (int i = x - r; i <= x + r; i++) {
                 for (int j = z - r; j <= z + r; j++) {
                     if (level != null) {
@@ -222,31 +248,37 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
                 }
             }
             int above = Configuration.WINDMILLS_ABOVE.get();
-            aboveOf = (float) Mth.clamp(root.getY() - h / n, 0, above) / above;
+            createPickyWheels$aboveOf = (float) Mth.clamp(createPickyWheels$root.getY() - h / n, 0, above) / above;
         }
+
+        ci.cancel();
     }
 
-    public void tickToo() {
+    @Unique
+    public void createPickyWheels$tickToo() {
         if (!queuedReassembly)  return;
         queuedReassembly = false;
         if (!running)  assembleNextTick = true;
     }
 
-    public boolean determineViability() {
+    @Unique
+    public boolean createPickyWheels$determineViability() {
         if (level != null && !level.getBiome(worldPosition).is(PickyTags.PICKY_WINDMILLS)) return false;
-        root = worldPosition;
+        createPickyWheels$root = worldPosition;
         return true;
     }
 
-    public void determineAndApplyFlowScore() {
-        flowCheck = validationTimer();
-        isViable = determineViability();
-        setFlowScoreAndUpdate(hasFlow && isViable ? (0.5F + aboveOf) : 0);
+    @Unique
+    public void createPickyWheels$determineAndApplyFlowScore() {
+        createPickyWheels$flowCheck = createPickyWheels$validationTimer();
+        createPickyWheels$isViable = createPickyWheels$determineViability();
+        createPickyWheels$setFlowScoreAndUpdate(createPickyWheels$hasFlow && createPickyWheels$isViable ? (0.5F + createPickyWheels$aboveOf) : 0);
     }
 
-    public void setFlowScoreAndUpdate(float score) {
-        if (flowScore == score)  return;
-        flowScore = score;
+    @Unique
+    public void createPickyWheels$setFlowScoreAndUpdate(float score) {
+        if (createPickyWheels$flowScore == score)  return;
+        createPickyWheels$flowScore = score;
         setSpeed(score);
         updateGeneratedRotation();
         setChanged();
@@ -255,25 +287,29 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-        if (!isViable && running) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
-        if (!hasFlow && running && isViable) TooltipHelper.addHint(tooltip, "hint.windmill_flow");
+        if (!createPickyWheels$enabled()) return addToGoggleTooltip;
+
+        if (!createPickyWheels$isViable && running) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
+        if (!createPickyWheels$hasFlow && running && createPickyWheels$isViable) TooltipHelper.addHint(tooltip, "hint.windmill_flow");
         return addToGoggleTooltip;
     }
 
     @Inject(method = "write", at = @At("TAIL"))
     private void write(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
-        if (hasFlow) NBTHelper.putMarker(nbt, "HasFlow");
-        if (isViable) NBTHelper.putMarker(nbt, "IsViable");
-        nbt.putFloat("FlowScore", flowScore);
-        nbt.putFloat("AboveOf", aboveOf);
+        if (!createPickyWheels$enabled()) return;
+        if (createPickyWheels$hasFlow) NBTHelper.putMarker(nbt, "HasFlow");
+        if (createPickyWheels$isViable) NBTHelper.putMarker(nbt, "IsViable");
+        nbt.putFloat("FlowScore", createPickyWheels$flowScore);
+        nbt.putFloat("AboveOf", createPickyWheels$aboveOf);
     }
 
     @Inject(method = "read", at = @At("TAIL"))
     private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
-        hasFlow = nbt.contains("HasFlow");
-        isViable = nbt.contains("IsViable");
-        flowScore = nbt.getInt("FlowScore");
-        aboveOf = nbt.getFloat("AboveOf");
+        if (!createPickyWheels$enabled()) return;
+        createPickyWheels$hasFlow = nbt.contains("HasFlow");
+        createPickyWheels$isViable = nbt.contains("IsViable");
+        createPickyWheels$flowScore = nbt.getInt("FlowScore");
+        createPickyWheels$aboveOf = nbt.getFloat("AboveOf");
     }
 
     @Shadow
@@ -284,4 +320,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
 
     @Shadow
     protected float lastGeneratedSpeed;
+
+    @Shadow public abstract void addBehaviours(List<BlockEntityBehaviour> behaviours);
+
 }

@@ -16,16 +16,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import zeh.createpickywheels.common.Configuration;
 
 @Mixin(value = KineticsScenes.class, remap = false)
 public abstract class WaterWheelScenesMixin {
 
-    /**
-	* @author ZehMaria
-	* @reason Changing Water Wheel to require a big body of water [like the Hose Pulley] and a River Biomes.
-	*/
-	@Overwrite
-	public static void waterWheel(SceneBuilder scene, SceneBuildingUtil util) {
+	@Inject(method = "waterWheel", at = @At("HEAD"), cancellable = true)
+	private static void waterWheelMixin(SceneBuilder scene, SceneBuildingUtil util, CallbackInfo ci) {
+		if (!Configuration.WATERWHEELS_ENABLED.get()) return;
 		scene.title("water_wheel", "Generating Rotational Force using Water Wheels");
 		scene.configureBasePlate(0, 0, 5);
 		scene.world.showSection(util.select.layer(0), Direction.UP);
@@ -71,14 +72,13 @@ public abstract class WaterWheelScenesMixin {
 		scene.world.modifyBlockEntity(wheel, WaterWheelBlockEntity.class, be -> be.applyMaterialIfValid(junglePlanks));
 		scene.idle(20);
 		scene.effects.indicateSuccess(gaugePos);
+
+		ci.cancel();
 	}
 
-    /**
-	* @author ZehMaria
-	* @reason Changing Water Wheel to require a big body of water [like the Hose Pulley] and a River Biomes.
-	*/
-	@Overwrite
-	public static void largeWaterWheel(SceneBuilder scene, SceneBuildingUtil util) {
+	@Inject(method = "largeWaterWheel", at = @At("HEAD"), cancellable = true)
+	private static void largeWaterWheelMixin(SceneBuilder scene, SceneBuildingUtil util, CallbackInfo ci) {
+		if (!Configuration.WATERWHEELS_ENABLED.get()) return;
 		scene.title("large_water_wheel", "Generating Rotational Force using Large Water Wheels");
 		scene.configureBasePlate(0, 0, 5);
 		scene.world.showSection(util.select.layer(0), Direction.UP);
@@ -132,5 +132,7 @@ public abstract class WaterWheelScenesMixin {
 		scene.overlay.showControls(new InputWindowElement(util.vector.topOf(target), Pointing.DOWN).rightClick().withItem(junglePlanks), 20);
 		scene.idle(7);
 		scene.world.modifyBlockEntity(wheel, WaterWheelBlockEntity.class, be -> be.applyMaterialIfValid(junglePlanks));
-    }
+
+		ci.cancel();
+	}
 }
