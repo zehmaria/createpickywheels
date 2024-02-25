@@ -5,6 +5,7 @@ import com.simibubi.create.foundation.utility.Lang;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -31,6 +32,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.nbt.CompoundTag;
 
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import zeh.createpickywheels.common.Configuration;
 import zeh.createpickywheels.common.PickyTags;
 import zeh.createpickywheels.common.util.BlockPosEntry;
@@ -234,6 +236,11 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
 	}
 
+	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
+	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
+		cir.setReturnValue(Mth.clamp(createPickyWheels$boost * flowScore, -1, 1) * 8 / getSize());
+	}
+
 	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
 	private void determineAndApplyFlowScoreMixin(CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
@@ -258,7 +265,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 						.style(ChatFormatting.DARK_GRAY))
 				.forGoggles(tooltip, 1);
 
-		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_river");
+		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
 		if (!createPickyWheels$hasValidSource && createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
 		if (!createPickyWheels$infinite && createPickyWheels$inBiome && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
 
