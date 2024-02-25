@@ -1,6 +1,8 @@
 package zeh.createpickywheels.mixin;
 
 import com.simibubi.create.foundation.item.TooltipHelper;
+import com.simibubi.create.foundation.utility.Lang;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
@@ -52,7 +54,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	public BlockPos createPickyWheels$root;
 
 	@Unique
-	private final int createPickyWheels$searchedPerTick = 640;
+	private final int createPickyWheels$searchedPerTick = 512;
 	@Unique
 	List<BlockPosEntry> createPickyWheels$frontier = new ArrayList<>();
 	@Unique
@@ -63,6 +65,9 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 
 	@Unique
 	List<BlockPos> createPickyWheels$powerSource = new ArrayList<>();
+
+	@Unique
+	protected float createPickyWheels$boost = 0;
 
 	@Unique
 	protected int createPickyWheels$validationTimer() {
@@ -81,6 +86,8 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_THRESHOLD.get(); }
 	@Unique
 	protected boolean createPickyWheels$enabled() { return Configuration.WATERWHEELS_ENABLED.get(); }
+	@Unique
+	protected double createPickyWheels$penalty() { return Configuration.WATERWHEELS_PENALTY.get(); }
 
 	@Unique
 	public void createPickyWheels$reset() {
@@ -211,8 +218,9 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Unique
 	public void createPickyWheels$determineViability() {
 		if (level == null) return;
-
-		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.PICKY_WATERWHEELS);
+		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_WHITELIST);
+		createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ? 1 :
+				(createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
 
 		createPickyWheels$powerSource.clear();
 		for (BlockPos blockPos : getOffsetsToCheck()) {
@@ -242,6 +250,14 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
+
+		Lang.number(createPickyWheels$boost * flowScore)
+				.style(ChatFormatting.AQUA)
+				.space()
+				.add(Lang.translate("hint.picky_biome_boost")
+						.style(ChatFormatting.DARK_GRAY))
+				.forGoggles(tooltip, 1);
+
 		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_river");
 		if (!createPickyWheels$hasValidSource && createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
 		if (!createPickyWheels$infinite && createPickyWheels$inBiome && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
@@ -264,15 +280,10 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$hasValidSource = nbt.contains("HasValidSource");
 	}
 
-	@Shadow
-	public abstract void setFlowScoreAndUpdate(int score);
-
-	@Shadow
-	protected abstract int getSize();
-
-	@Shadow
-	protected abstract Set<BlockPos> getOffsetsToCheck();
-
+	@Shadow public int flowScore;
+	@Shadow public abstract void setFlowScoreAndUpdate(int score);
+	@Shadow protected abstract int getSize();
+	@Shadow protected abstract Set<BlockPos> getOffsetsToCheck();
 	@Shadow public abstract void determineAndApplyFlowScore();
 
 }

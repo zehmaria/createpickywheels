@@ -1,9 +1,9 @@
 {
-  "create.hint.waterwheel_infinite.title": "Not a Flowing River",
+  "create.hint.waterwheel_infinite.title": "Not Enough Water",
   "create.hint.waterwheel_infinite": "The targeted body of fluid is not big enough.",
 
-  "create.hint.waterwheel_river.title": "Not at a River Biome",
-  "create.hint.waterwheel_river": "Waterwheels are picky about their biomes.",
+  "create.hint.waterwheel_biome.title": "Invalid Biome",
+  "create.hint.waterwheel_biome": "Waterwheels are picky about their biomes.",
 
   "create.hint.waterwheel_source.title": "Lacking Power Source",
   "create.hint.waterwheel_source": "Too many or too few water sources are trying to rotate this waterwheel.",
@@ -11,6 +11,9 @@
   "create.hint.windmill_flow.title": "Not Enough Air Flow",
   "create.hint.windmill_flow": "This windmill lacks enough empty space around it. Or else, where all that wind would come from?",
 
-  "create.hint.waterwheel_biome.title": "Invalid Biome",
-  "create.hint.waterwheel_biome": "Windmills are picky about their biomes."
+  "create.hint.windmill_biome.title": "Invalid Biome",
+  "create.hint.windmill_biome": "Windmills are picky about their biomes.",
+
+  "create.hint.picky_biome_boost": "Biome efficiency",
+  "create.hint.picky_height_boost": "Height efficiency"
 }

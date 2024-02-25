@@ -21,7 +21,7 @@ logoFile="cpw_logo.png"
 [[dependencies.createpickywheels]]
     modId="create"
     mandatory=true
-    versionRange="[0.5.1.e,0.5.2)"
+    versionRange="[0.5.1.a,0.5.2)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.createpickywheels]]

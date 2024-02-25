@@ -6,10 +6,14 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
 public class PickyTags {
-    public static final TagKey<Biome> PICKY_WATERWHEELS = create("picky_waterwheels");
-    public static final TagKey<Biome> PICKY_WINDMILLS = create("picky_windmills");
+
+    public static final TagKey<Biome> WATERWHEELS_WHITELIST = create("waterwheels_whitelist");
+    public static final TagKey<Biome> WATERWHEELS_BOOSTED = create("waterwheels_boosted");
+    public static final TagKey<Biome> WINDMILLS_WHITELIST = create("windmills_whitelist");
+    public static final TagKey<Biome> WINDMILLS_BOOSTED = create("windmills_boosted");
 
     private static TagKey<Biome> create(String id) {
         return TagKey.create(Registry.BIOME_REGISTRY, new ResourceLocation(zeh.createpickywheels.CreatePickyWheels.MODID, id));
     }
+
 }
