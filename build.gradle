@@ -119,7 +119,7 @@ sourceSets.main.resources {
 }
 
 mixin {
-    add sourceSets.main, 'createlowheated.refmap.json'
+    add sourceSets.main, 'createpickywheels.refmap.json'
 }
 
 // Workaround for SpongePowered/MixinGradle#38
