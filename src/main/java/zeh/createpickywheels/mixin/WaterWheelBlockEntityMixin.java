@@ -42,8 +42,6 @@ import java.util.*;
 @Mixin(value = WaterWheelBlockEntity.class, remap = false)
 public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockEntity {
 
-	@Shadow public int flowScore;
-
 	private WaterWheelBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) { super(type, pos, state); }
 	@Unique
 	private boolean createPickyWheels$infinite = false;
@@ -289,14 +287,9 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$hasValidSource = nbt.contains("HasValidSource");
 	}
 
-	@Shadow
-	public abstract void setFlowScoreAndUpdate(int score);
-
-	@Shadow
-	protected abstract int getSize();
-
-																																																																																@Shadow
-	protected abstract Set<BlockPos> getOffsetsToCheck();
-
+	@Shadow public int flowScore;
+	@Shadow public abstract void setFlowScoreAndUpdate(int score);
+	@Shadow protected abstract int getSize();
+	@Shadow protected abstract Set<BlockPos> getOffsetsToCheck();
 	@Shadow public abstract void determineAndApplyFlowScore();
 }
