@@ -1,6 +1,6 @@
 modLoader="javafml"
 license="MIT"
-loaderVersion="[43,)"
+loaderVersion="[40,)"
 issueTrackerURL="https://github.com/zehmaria/createpickywheels/issues"
 displayURL="https://github.com/zehmaria/createpickywheels"
 logoFile= "logo.png"
@@ -16,7 +16,7 @@ logoFile= "logo.png"
     modId="forge"
     mandatory=true
     ordering="NONE"
-    versionRange="[43.2.0,)"
+    versionRange="[40.2.0,)"
     side="BOTH"
 [[dependencies.createpickywheels]]
     modId="create"
@@ -27,6 +27,6 @@ logoFile= "logo.png"
 [[dependencies.createpickywheels]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19.2,1.20)"
+    versionRange="[1.18.2,1.19)"
     ordering="NONE"
     side="BOTH"

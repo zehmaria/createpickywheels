@@ -1,6 +1,6 @@
 {
   "values": [
-    "#minecraft:is_overworld",
+    "#forge:is_overworld",
     "#createpickywheels:waterwheels_boosted"
   ]
 }
