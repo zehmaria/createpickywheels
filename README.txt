@@ -16,4 +16,4 @@ This project was designed to work in tandem with Crete Low-Heated [plus, the int
 
 Curseforge: https://legacy.curseforge.com/minecraft/mc-mods/create-picky-waterwheels
 Modrinth: https://modrinth.com/mod/create-picky-wheels
-Screenshots: https://github.com/zehmaria/createpickywheels/screenshots
+Screenshots: https://github.com/zehmaria/createpickywheels/tree/mc1.20.1/dev/screenshots
