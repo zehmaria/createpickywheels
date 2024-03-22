@@ -31,7 +31,10 @@ import zeh.createpickywheels.common.Configuration;
 import zeh.createpickywheels.common.PickyTags;
 import zeh.createpickywheels.common.util.BlockPosEntry;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Mixin(value = WindmillBearingBlockEntity.class, remap = false)
 public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingBlockEntity {

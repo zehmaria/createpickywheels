@@ -1,27 +1,20 @@
 package zeh.createpickywheels.mixin;
 
-import com.simibubi.create.foundation.item.TooltipHelper;
-import com.simibubi.create.foundation.utility.Lang;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.At;
-
 import com.simibubi.create.content.fluids.transfer.FluidManipulationBehaviour.ChunkNotLoadedException;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.content.kinetics.waterwheel.WaterWheelBlockEntity;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.fluid.FluidHelper;
+import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.Iterate;
+import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTHelper;
-
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,10 +22,15 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.core.Direction;
-
+import net.minecraft.world.phys.shapes.CollisionContext;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import zeh.createpickywheels.CreatePickyWheels;
 import zeh.createpickywheels.common.Configuration;
 import zeh.createpickywheels.common.PickyTags;
 import zeh.createpickywheels.common.util.BlockPosEntry;
@@ -87,7 +85,10 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Unique
 	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_THRESHOLD.get(); }
 	@Unique
-	protected boolean createPickyWheels$enabled() { return Configuration.WATERWHEELS_ENABLED.get(); }
+	protected boolean createPickyWheels$enabled() {
+		return Configuration.WATERWHEELS_ENABLED.get() &&
+				(!Configuration.WATERWHEELS_PICKY.get() || getBlockState().getValue(CreatePickyWheels.PICKY));
+	}
 	@Unique
 	protected double createPickyWheels$penalty() { return Configuration.WATERWHEELS_PENALTY.get(); }
 
@@ -250,6 +251,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 
 	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
 	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
+		if (!createPickyWheels$enabled()) return;
 		cir.setReturnValue(Mth.clamp(createPickyWheels$boost * flowScore, -1, 1) * 8 / getSize());
 	}
 

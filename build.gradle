@@ -59,6 +59,7 @@ minecraft {
         }
         data {
             workingDirectory project.file('run')
+            arg '-mixin.config=createpickywheels.mixins.json'
             property 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'debug'
             args '--mod', 'createpickywheels', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/'), '--existing-mod', 'create'

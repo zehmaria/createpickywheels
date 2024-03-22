@@ -1,21 +1,18 @@
 package zeh.createpickywheels.mixin;
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-
 import com.simibubi.create.content.kinetics.waterwheel.WaterWheelBlockEntity;
 import com.simibubi.create.foundation.ponder.PonderPalette;
 import com.simibubi.create.foundation.ponder.SceneBuilder;
 import com.simibubi.create.foundation.ponder.SceneBuildingUtil;
+import com.simibubi.create.foundation.ponder.element.InputWindowElement;
 import com.simibubi.create.foundation.utility.Pointing;
 import com.simibubi.create.infrastructure.ponder.scenes.KineticsScenes;
-import com.simibubi.create.foundation.ponder.element.InputWindowElement;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
+import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
