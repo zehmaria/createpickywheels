@@ -9,6 +9,7 @@ public class Configuration {
 	public static ForgeConfigSpec COMMON_CONFIG;
 
 	public static ForgeConfigSpec.BooleanValue WATERWHEELS_ENABLED;
+	public static ForgeConfigSpec.BooleanValue WATERWHEELS_PICKY;
 	public static ForgeConfigSpec.DoubleValue WATERWHEELS_PENALTY;
 	public static ForgeConfigSpec.IntValue WATERWHEELS_THRESHOLD;
 	public static ForgeConfigSpec.IntValue WATERWHEELS_RANGE;
@@ -33,8 +34,9 @@ public class Configuration {
 
 		WATERWHEELS_ENABLED = COMMON_BUILDER.comment("Enable waterwheels modifications?")
 				.define("waterwheelsEnabled", true);
-
-		WATERWHEELS_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed on whitelisted but not on preferential biomes [waterwheel_boosted biome tag]")
+		WATERWHEELS_PICKY = COMMON_BUILDER.comment("Only enable pickyness onPlacement, if the water wheel was instead generated during worldgen, it works as default.")
+				.define("waterwheelsPickyOnPlacement", true);
+		WATERWHEELS_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed on whitelisted but not on preferential biomes [waterwheel_boosted biome tag].")
 				.defineInRange("waterwheelPenalty", 0.25, 0, 1);
 
 		WATERWHEELS_THRESHOLD = COMMON_BUILDER.comment("The minimum amount of fluid blocks the waterwheel needs to find before rotation begins.")
@@ -50,10 +52,10 @@ public class Configuration {
 		WINDMILLS_ENABLED = COMMON_BUILDER.comment("Enable windmills modifications?")
 				.define("windmillsEnabled", true);
 
-		WINDMILLS_PENALTY = COMMON_BUILDER.comment("Penalty for Windmills placed on whitelisted but not on preferential biomes [windmills_boosted biome tag]")
+		WINDMILLS_PENALTY = COMMON_BUILDER.comment("Penalty for Windmills placed on whitelisted but not on preferential biomes [windmills_boosted biome tag].")
 				.defineInRange("windmillPenalty", 0.75, 0, 1);
 
-		WINDMILLS_THRESHOLD = COMMON_BUILDER.comment("The minimum floor area required. Default: 1/4 of the max area [PI * 32 ^ 2]")
+		WINDMILLS_THRESHOLD = COMMON_BUILDER.comment("The minimum floor area required. Default: 1/4 of the max area [PI * 32 ^ 2].")
 				.defineInRange("windmillThreshold", 804, 1, Integer.MAX_VALUE);
 
 		WINDMILLS_REQUIRED_RANGE = COMMON_BUILDER.comment("The minimum length of air current required.")
