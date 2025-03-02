@@ -6,9 +6,9 @@ import com.simibubi.create.content.kinetics.waterwheel.WaterWheelBlockEntity;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.item.TooltipHelper;
-import com.simibubi.create.foundation.utility.Iterate;
-import com.simibubi.create.foundation.utility.Lang;
-import com.simibubi.create.foundation.utility.NBTHelper;
+import com.simibubi.create.foundation.utility.CreateLang;
+import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -260,10 +260,10 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
-		Lang.number(createPickyWheels$boost * flowScore)
+		CreateLang.number(createPickyWheels$boost * flowScore)
 				.style(ChatFormatting.AQUA)
 				.space()
-				.add(Lang.translate("hint.picky_biome_boost")
+				.add(CreateLang.translate("hint.picky_biome_boost")
 						.style(ChatFormatting.DARK_GRAY))
 				.forGoggles(tooltip, 1);
 

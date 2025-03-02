@@ -8,7 +8,7 @@
 	"mixins": [
 		"WaterWheelBlockEntityMixin",
 		"WaterWheelScenesMixin",
-		"PonderRegistrationHelperMixin",
+		"AllCreatePonderScenesMixin",
 		"WindmillBearingBlockEntityMixin",
 		"WaterWheelBlockMixin",
 		"LargeWaterWheelBlockMixin"

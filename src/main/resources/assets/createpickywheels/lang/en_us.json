@@ -15,5 +15,15 @@
   "create.hint.windmill_biome": "Windmills are picky about their biomes.",
 
   "create.hint.picky_biome_boost": "Biome efficiency",
-  "create.hint.picky_height_boost": "Height efficiency"
+  "create.hint.picky_height_boost": "Height efficiency",
+
+  "create.ponder.water_wheel.text_4": "If the body of water is large enough, Water Wheels draw force from adjacent Water Sources. Boosted in River Biomes",
+  "create.ponder.water_wheel.text_5": "Covering additional sides, or fully submerging it, will disable its kinetic output",
+  "create.ponder.water_wheel.text_6": "Use wood planks on the wheel to change its appearance",
+
+  "create.ponder.large_water_wheel.text_6": "If the body of water is large enough, Large Water Wheels draw force from adjacent Water Sources. Boosted in River Biomes",
+  "create.ponder.large_water_wheel.text_7": "Covering additional sides, or fully submerging it, will disable its kinetic output",
+  "create.ponder.large_water_wheel.text_8": "These rotate only at half the speed of regular water wheels...",
+  "create.ponder.large_water_wheel.text_9": "...but provide a substantially higher stress capacity",
+  "create.ponder.large_water_wheel.text_10": "Use wood planks on the wheel to change its appearance"
 }

@@ -6,9 +6,9 @@ import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEnti
 import com.simibubi.create.content.fluids.transfer.FluidManipulationBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.item.TooltipHelper;
-import com.simibubi.create.foundation.utility.Iterate;
-import com.simibubi.create.foundation.utility.Lang;
-import com.simibubi.create.foundation.utility.NBTHelper;
+import com.simibubi.create.foundation.utility.CreateLang;
+import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.nbt.NBTHelper;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -206,6 +206,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
 
         super.tick();
         if (level != null && level.isClientSide()) return;
+
         createPickyWheels$tickToo();
 
         if (movedContraption == null) return;
@@ -296,20 +297,22 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
-        Lang.number(createPickyWheels$boost)
-                .style(ChatFormatting.AQUA)
-                .space()
-                .add(Lang.translate("hint.picky_biome_boost")
-                        .style(ChatFormatting.DARK_GRAY))
-                .forGoggles(tooltip, 1);
+        if (createPickyWheels$boost > 0) {
+            CreateLang.number(createPickyWheels$boost)
+                    .style(ChatFormatting.AQUA)
+                    .space()
+                    .add(CreateLang.translate("hint.picky_biome_boost")
+                            .style(ChatFormatting.DARK_GRAY))
+                    .forGoggles(tooltip, 1);
 
-        double abovePenalty = Configuration.WINDMILLS_ABOVE_PENALTY.get();
-        Lang.number((1F - abovePenalty * (1 - createPickyWheels$aboveOf)))
-                .style(ChatFormatting.AQUA)
-                .space()
-                .add(Lang.translate("hint.picky_height_boost")
-                        .style(ChatFormatting.DARK_GRAY))
-                .forGoggles(tooltip, 1);
+            double abovePenalty = Configuration.WINDMILLS_ABOVE_PENALTY.get();
+            CreateLang.number((1F - abovePenalty * (1 - createPickyWheels$aboveOf)))
+                    .style(ChatFormatting.AQUA)
+                    .space()
+                    .add(CreateLang.translate("hint.picky_height_boost")
+                            .style(ChatFormatting.DARK_GRAY))
+                    .forGoggles(tooltip, 1);
+        }
 
         if (!createPickyWheels$isViable && running) TooltipHelper.addHint(tooltip, "hint.windmill_biome");
         if (!createPickyWheels$hasFlow && running && createPickyWheels$isViable) TooltipHelper.addHint(tooltip, "hint.windmill_flow");
