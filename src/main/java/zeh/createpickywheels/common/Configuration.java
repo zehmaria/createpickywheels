@@ -1,34 +1,32 @@
 package zeh.createpickywheels.common;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
-@Mod.EventBusSubscriber
 public class Configuration {
 
-    public static ForgeConfigSpec COMMON_CONFIG;
+    public static ModConfigSpec COMMON_CONFIG;
 
-	public static ForgeConfigSpec.BooleanValue WATERWHEELS_ENABLED;
-	public static ForgeConfigSpec.BooleanValue WATERWHEELS_PICKY;
-	public static ForgeConfigSpec.DoubleValue WATERWHEELS_PENALTY;
-	public static ForgeConfigSpec.IntValue WATERWHEELS_THRESHOLD;
-	public static ForgeConfigSpec.IntValue WATERWHEELS_RANGE;
+	public static ModConfigSpec.BooleanValue WATERWHEELS_ENABLED;
+	public static ModConfigSpec.BooleanValue WATERWHEELS_PICKY;
+	public static ModConfigSpec.DoubleValue WATERWHEELS_PENALTY;
+	public static ModConfigSpec.IntValue WATERWHEELS_THRESHOLD;
+	public static ModConfigSpec.IntValue WATERWHEELS_RANGE;
 
-	public static ForgeConfigSpec.BooleanValue WINDMILLS_ENABLED;
+	public static ModConfigSpec.BooleanValue WINDMILLS_ENABLED;
 
-	public static ForgeConfigSpec.DoubleValue WINDMILLS_PENALTY;
-	public static ForgeConfigSpec.IntValue WINDMILLS_THRESHOLD;
-	public static ForgeConfigSpec.IntValue WINDMILLS_REQUIRED_RANGE;
+	public static ModConfigSpec.DoubleValue WINDMILLS_PENALTY;
+	public static ModConfigSpec.IntValue WINDMILLS_THRESHOLD;
+	public static ModConfigSpec.IntValue WINDMILLS_REQUIRED_RANGE;
 
-	public static ForgeConfigSpec.IntValue WINDMILLS_REQUIRED_RANGE_POINTS;
-	public static ForgeConfigSpec.IntValue WINDMILLS_MAX_RANGE;
-	public static ForgeConfigSpec.DoubleValue WINDMILLS_ABOVE_PENALTY;
+	public static ModConfigSpec.IntValue WINDMILLS_REQUIRED_RANGE_POINTS;
+	public static ModConfigSpec.IntValue WINDMILLS_MAX_RANGE;
+	public static ModConfigSpec.DoubleValue WINDMILLS_ABOVE_PENALTY;
 
-	public static ForgeConfigSpec.IntValue WINDMILLS_ABOVE;
+	public static ModConfigSpec.IntValue WINDMILLS_ABOVE;
 
     static {
 
-		ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
+		ModConfigSpec.Builder COMMON_BUILDER = new ModConfigSpec.Builder();
 
 	    COMMON_BUILDER.comment("#Waterwheel requirements").push("waterwheels");
 

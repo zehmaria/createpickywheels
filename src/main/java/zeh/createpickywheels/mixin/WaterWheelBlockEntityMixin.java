@@ -8,10 +8,10 @@ import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -124,7 +124,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		int maxRangeSq = maxRange * maxRange;
 
 		for (int i = 0; i < createPickyWheels$searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks); i++) {
-			BlockPosEntry entry = frontier.remove(0);
+			BlockPosEntry entry = frontier.removeFirst();
 			BlockPos currentPos = entry.pos();
 			if (visited.contains(currentPos)) continue; else visited.add(currentPos);
 			if (level != null && !level.isLoaded(currentPos)) throw new ChunkNotLoadedException();
@@ -233,7 +233,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 				createPickyWheels$isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
 			}
 		}
-		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
+		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.getFirst() : worldPosition;
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
 	}
 
@@ -274,19 +274,19 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		return addToGoggleTooltip;
 	}
 	@Inject(method = "write", at = @At("TAIL"))
-	private void write(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+	private void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
-		if (createPickyWheels$infinite) NBTHelper.putMarker(nbt, "Infinite");
-		if (createPickyWheels$inBiome) NBTHelper.putMarker(nbt, "InBiome");
-		if (createPickyWheels$hasValidSource) NBTHelper.putMarker(nbt, "HasValidSource");
+		compound.putBoolean("Infinite", createPickyWheels$infinite);
+		compound.putBoolean("InBiome", createPickyWheels$inBiome);
+		compound.putBoolean("HasValidSource", createPickyWheels$hasValidSource);
 	}
 
 	@Inject(method = "read", at = @At("TAIL"))
-	private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+	private void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
-		createPickyWheels$infinite = nbt.contains("Infinite");
-		createPickyWheels$inBiome = nbt.contains("InBiome");
-		createPickyWheels$hasValidSource = nbt.contains("HasValidSource");
+		createPickyWheels$infinite = compound.contains("Infinite");
+		createPickyWheels$inBiome = compound.contains("InBiome");
+		createPickyWheels$hasValidSource = compound.contains("HasValidSource");
 	}
 
 	@Shadow public int flowScore;

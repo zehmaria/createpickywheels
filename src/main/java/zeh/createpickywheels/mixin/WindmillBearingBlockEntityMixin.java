@@ -8,12 +8,12 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.nbt.NBTHelper;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import zeh.createpickywheels.CreatePickyWheels;
 import zeh.createpickywheels.common.Configuration;
 import zeh.createpickywheels.common.PickyTags;
 import zeh.createpickywheels.common.util.BlockPosEntry;
@@ -124,7 +125,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         float rh = Mth.sqrt(sails);
 
         for (int i = 0; i < createPickyWheels$searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks || createPickyWheels$currents <= createPickyWheels$requiredRangePoints()); i++) {
-            BlockPosEntry entry = frontier.remove(0);
+            BlockPosEntry entry = frontier.removeFirst();
             BlockPos currentPos = entry.pos();
 
             if (currentPos.distSqr(createPickyWheels$root) > requiredRangeSq) createPickyWheels$currents++;
@@ -253,8 +254,13 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     @Unique
     public boolean createPickyWheels$determineViability() {
         createPickyWheels$boost = 0;
-        if (level != null && !level.getBiome(worldPosition).is(PickyTags.WINDMILLS_WHITELIST)) return false;
-        createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WINDMILLS_BOOSTED) ? 1.0F : (float) createPickyWheels$penalty();
+        if (level != null) {
+            CreatePickyWheels.LOGGER.info("level not null");
+            if (!level.getBiome(worldPosition).is(PickyTags.WINDMILLS_WHITELIST)) return false;
+            CreatePickyWheels.LOGGER.info("level not null and whitelisted");
+            createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WINDMILLS_BOOSTED) ? 1.0F : (float) createPickyWheels$penalty();
+            CreatePickyWheels.LOGGER.info("boosted  " + createPickyWheels$boost);
+        }
         createPickyWheels$root = worldPosition;
         return true;
     }
@@ -265,6 +271,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         createPickyWheels$isViable = createPickyWheels$determineViability();
         createPickyWheels$setFlowScoreAndUpdate(createPickyWheels$hasFlow && createPickyWheels$isViable ?
                 ((0.5F + createPickyWheels$aboveOf) * createPickyWheels$boost) : 0);
+        CreatePickyWheels.LOGGER.info("hasFLow  " + createPickyWheels$hasFlow);
     }
 
     @Unique
@@ -321,23 +328,23 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     }
 
     @Inject(method = "write", at = @At("TAIL"))
-    private void write(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+    private void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
         if (!createPickyWheels$enabled()) return;
-        if (createPickyWheels$hasFlow) NBTHelper.putMarker(nbt, "HasFlow");
-        if (createPickyWheels$isViable) NBTHelper.putMarker(nbt, "IsViable");
-        nbt.putFloat("FlowScore", createPickyWheels$flowScore);
-        nbt.putFloat("AboveOf", createPickyWheels$aboveOf);
-        nbt.putFloat("Boosted", createPickyWheels$boost);
+        compound.putBoolean("HasFlow", createPickyWheels$hasFlow);
+        compound.putBoolean("IsViable", createPickyWheels$isViable);
+        compound.putFloat("FlowScore", createPickyWheels$flowScore);
+        compound.putFloat("AboveOf", createPickyWheels$aboveOf);
+        compound.putFloat("Boosted", createPickyWheels$boost);
     }
 
     @Inject(method = "read", at = @At("TAIL"))
-    private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+    private void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket, CallbackInfo ci) {
         if (!createPickyWheels$enabled()) return;
-        createPickyWheels$hasFlow = nbt.contains("HasFlow");
-        createPickyWheels$isViable = nbt.contains("IsViable");
-        createPickyWheels$flowScore = nbt.getInt("FlowScore");
-        createPickyWheels$aboveOf = nbt.getFloat("AboveOf");
-        createPickyWheels$boost = nbt.getFloat("Boosted");
+        createPickyWheels$hasFlow = compound.getBoolean("HasFlow");
+        createPickyWheels$isViable = compound.getBoolean("IsViable");
+        createPickyWheels$flowScore = compound.getInt("FlowScore");
+        createPickyWheels$aboveOf = compound.getFloat("AboveOf");
+        createPickyWheels$boost = compound.getFloat("Boosted");
     }
     @Shadow protected boolean queuedReassembly;
     @Shadow  protected abstract float getAngleSpeedDirection();

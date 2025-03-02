@@ -1,155 +1,140 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        mavenCentral()
-        jcenter()
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-    }
-    dependencies {
-        classpath "net.minecraftforge.gradle:ForgeGradle:${forgegradle_version}"
-        classpath "org.parchmentmc:librarian:${librarian_version}"
-        classpath "org.spongepowered:mixingradle:${mixingradle_version}"
-    }
-}
-
 plugins {
-    id 'com.matthewprenger.cursegradle' version "${cursegradle_version}"
+    id "idea"
+    id "eclipse"
+    id "maven-publish"
+    id "net.neoforged.moddev" version "2.0.74"
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'idea'
-apply plugin: "org.spongepowered.mixin"
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
 
-group = mod_author + '.' + mod_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = mod_id + "-forge"
-version = minecraft_version + '-' + create_version + '-' + mod_version
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+base {
+    version = minecraft_version + '-' + create_version + '-' + mod_version
+    group = mod_author + '.' + mod_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+    archivesName = mod_id + "-neoforge"
+}
 
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
-minecraft {
-    if (Boolean.parseBoolean(project.use_parchment)) {
-        mappings channel: 'parchment', version: "${parchment_version}-${minecraft_version}"
-    } else {
-        mappings channel: 'official', version: "${minecraft_version}"
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
     }
 
     runs {
-        client = {
-            workingDirectory project.file('run')
-            arg '-mixin.config=createpickywheels.mixins.json'
-            property 'forge.logging.console.level', 'info'
-            mods {
-                createpickywheels {
-                    source sourceSets.main
-                }
-            }
+        configureEach {
+            systemProperty 'mixin.debug.verbose', 'true'
+            systemProperty 'mixin.debug.export', 'true'
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            logLevel = org.slf4j.event.Level.DEBUG
         }
-        server = {
-            workingDirectory project.file('run')
-            arg '-mixin.config=createpickywheels.mixins.json'
-            property 'forge.logging.console.level', 'info'
-            mods {
-                createpickywheels {
-                    source sourceSets.main
-                }
-            }
+
+        client {
+            client()
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
         data {
-            workingDirectory project.file('run')
-            arg '-mixin.config=createpickywheels.mixins.json'
-            property 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
-            args '--mod', 'createpickywheels', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/'), '--existing-mod', 'create'
-            
-            mods {
-                createpickywheels {
-                    source sourceSets.main
-                }
-            }
+            data()
+            programArguments.addAll '--mod', "mingle", '--all', '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
         }
-    }
-}
 
-repositories {
-    maven { url = "https://maven.createmod.net" } // Ponder, Flywheel
-    maven {
-        // Location of the maven for mixed mappings, Registrate, and Flywheel
-        name 'tterrag maven'
-        url 'https://maven.tterrag.com'
-    }
-    maven {
-        // location of the maven that hosts JEI files since January 2023
-        // location of the maven for Vazkii's mods
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
-    }
-    maven {
-        url 'https://www.cursemaven.com'
-        content {
-            includeGroup "curse.maven"
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-    }
-    
-    mavenLocal()
-    flatDir {
-        dirs 'libs'
-    }
-}
-
-dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
-    implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
-    implementation fg.deobf("dev.engine-room.flywheel:flywheel-forge-${flywheel_minecraft_version}:${flywheel_version}")
-    implementation fg.deobf("net.createmod.ponder:Ponder-Forge-${ponder_minecraft_version}:${ponder_version}")
-    implementation fg.deobf("com.simibubi.create:create-${create_minecraft_version}:${create_version}-${create_version_suffix}") { transitive = false }
-
-    if (!Boolean.getBoolean('idea.sync.active')) {
-        annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
     }
 }
 
 sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-    exclude '.cache/'
+    srcDirs += 'src/generated/resources'
+    exclude '.cache'
 }
 
-mixin {
-    add sourceSets.main, 'createpickywheels.refmap.json'
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
-// Workaround for SpongePowered/MixinGradle#38
-afterEvaluate {
-    tasks.configureReobfTaskForReobfJar.mustRunAfter(tasks.compileJava)
-    tasks.configureReobfTaskForReobfJarJar.mustRunAfter(tasks.compileJava)
+repositories {
+    maven { url = "https://mvn.devos.one/snapshots" } // Registrate
+    maven { url = "https://maven.createmod.net" } // Ponder, Flywheel
+    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven" } // NeoForge config api port, needed by ponder
+    maven { url = "https://www.cursemaven.com" }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+dependencies {
+    implementation "net.neoforged:neoforge:${neo_version}"
+    
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+    implementation("dev.engine-room.flywheel:flywheel-neoforge-${flywheel_minecraft_version}:${flywheel_version}")
+    implementation("net.createmod.ponder:Ponder-NeoForge-${ponder_minecraft_version}:${ponder_version}")
+    implementation("com.simibubi.create:create-${create_minecraft_version}:${create_version}-${create_version_suffix}") { transitive = false }
+
+    if (!Boolean.getBoolean('idea.sync.active')) {
+        //annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+    }
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            "create_version_range" : create_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_author             : mod_author,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                "Specification-Title"     : mod_id,
+                "Specification-Vendor"    : mod_author,
+                "Specification-Version"   : mod_version,
+                "Implementation-Title"    : project.jar.archiveBaseName,
+                "Implementation-Version"  : project.jar.archiveVersion,
+                "Implementation-Vendor"   : mod_author,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "MixinConfigs": "createpickywheels.mixins.json"
+        ])
+    }
 }
 
 compileJava {
     options.compilerArgs = ['-Xdiags:verbose']
 }
-
-jar {
-    manifest {
-        attributes([
-                "Specification-Title"     : mod_id,
-                "Specification-Vendor"    : mod_author,
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.jar.archiveBaseName,
-                "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : mod_author,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ", TimeZone.getTimeZone("UTC")),
-                "MixinConfigs"            : "createpickywheels.mixins.json"
-        ])
-    }
-}
-
-// Example configuration to allow publishing using the maven-publish plugin
-// This is the preferred method to reobfuscate your jar file
-jar.finalizedBy('reobfJar')
