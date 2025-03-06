@@ -6,7 +6,7 @@ displayURL="https://github.com/zehmaria/createpickywheels"
 
 [[mods]]
 modId="${mod_id}"
-version="${mod_version}"
+version="${mod_long_version}"
 displayName="${mod_name}"
 logoFile="logo.png"
 authors="${mod_author}"

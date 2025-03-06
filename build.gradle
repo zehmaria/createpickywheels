@@ -7,6 +7,11 @@ plugins {
 
 idea {
     module {
+        //Exclude directories from being managed
+        for (String excludeDirName in ["runs", "out", "logs", "gradle"]) {
+            excludeDirs.add(file(excludeDirName))
+        }
+        //Tell IDEA to always download sources/javadoc artifacts from maven.
         downloadJavadoc = true
         downloadSources = true
     }
@@ -22,6 +27,8 @@ base {
 
 neoForge {
     version = project.neo_version
+
+    //accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 
     parchment {
         mappingsVersion = project.parchment_mappings_version
@@ -58,7 +65,7 @@ neoForge {
 
         data {
             data()
-            programArguments.addAll '--mod', "mingle", '--all', '--output', file('src/generated/resources/').getAbsolutePath(),
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(),
                     '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
@@ -109,7 +116,7 @@ tasks.withType(ProcessResources).configureEach {
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
-            mod_version            : mod_version,
+            mod_long_version       : minecraft_version + "-" + create_version  + "-" + mod_version,
             mod_author             : mod_author,
             mod_description        : mod_description
     ]
