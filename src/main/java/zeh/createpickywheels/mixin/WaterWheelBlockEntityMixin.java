@@ -91,6 +91,8 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	}
 	@Unique
 	protected double createPickyWheels$penalty() { return Configuration.WATERWHEELS_PENALTY.get(); }
+    @Unique
+    protected double createPickyWheels$baseBoost() { return Configuration.WATERWHEELS_BASE_BOOST.get(); }
 
 	@Unique
 	public void createPickyWheels$reset() {
@@ -222,8 +224,8 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	public void createPickyWheels$determineViability() {
 		if (level == null) return;
 		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_WHITELIST);
-		createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ? 1 :
-				(createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
+        createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ? (float) createPickyWheels$baseBoost() :
+                (createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
 
 		createPickyWheels$powerSource.clear();
 		for (BlockPos blockPos : getOffsetsToCheck()) {
@@ -252,7 +254,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
 	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
 		if (!createPickyWheels$enabled()) return;
-		cir.setReturnValue(Mth.clamp(createPickyWheels$boost * flowScore, -1, 1) * 8 / getSize());
+        cir.setReturnValue(createPickyWheels$boost * flowScore * 8 / getSize());
 	}
 
 	@Override

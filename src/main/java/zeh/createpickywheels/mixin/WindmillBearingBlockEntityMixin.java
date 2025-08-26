@@ -92,6 +92,8 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     protected boolean createPickyWheels$enabled() { return Configuration.WINDMILLS_ENABLED.get(); }
     @Unique
     protected double createPickyWheels$penalty() { return Configuration.WINDMILLS_PENALTY.get(); }
+    @Unique
+    protected double createPickyWheels$baseBoost() { return Configuration.WINDMILLS_BASE_BOOST.get(); }
 
     @Unique
     public void createPickyWheels$reset() {
@@ -254,7 +256,8 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     public boolean createPickyWheels$determineViability() {
         createPickyWheels$boost = 0;
         if (level != null && !level.getBiome(worldPosition).is(PickyTags.WINDMILLS_WHITELIST)) return false;
-        createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WINDMILLS_BOOSTED) ? 1.0F : (float) createPickyWheels$penalty();
+        createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WINDMILLS_BOOSTED) ? (float) createPickyWheels$baseBoost()
+                : (float) createPickyWheels$penalty();
         createPickyWheels$root = worldPosition;
         return true;
     }
