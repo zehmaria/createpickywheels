@@ -9,6 +9,7 @@ public class Configuration {
     public static ForgeConfigSpec COMMON_CONFIG;
 
 	public static ForgeConfigSpec.BooleanValue WATERWHEELS_ENABLED;
+    public static ForgeConfigSpec.BooleanValue WATERWHEELS_FLOW;
 	public static ForgeConfigSpec.BooleanValue WATERWHEELS_PICKY;
     public static ForgeConfigSpec.DoubleValue WATERWHEELS_BASE_BOOST;
 	public static ForgeConfigSpec.DoubleValue WATERWHEELS_PENALTY;
@@ -36,6 +37,9 @@ public class Configuration {
 
 		WATERWHEELS_ENABLED = COMMON_BUILDER.comment("Enable waterwheels modifications?")
 				.define("waterwheelsEnabled", true);
+
+        WATERWHEELS_FLOW = COMMON_BUILDER.comment("When enabled waterwheels require correct flow (like in TerraFirmaCraft's water river)")
+                .define("waterwheelsRequiresFlow", false);
 
 		WATERWHEELS_PICKY = COMMON_BUILDER.comment("Only enable pickyness onPlacement, if the water wheel was instead generated during worldgen, it works as default.")
 				.define("waterwheelsPickyOnPlacement", true);

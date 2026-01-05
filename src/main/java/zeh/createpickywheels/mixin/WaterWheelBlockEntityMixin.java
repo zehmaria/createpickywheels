@@ -8,10 +8,12 @@ import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.math.VecHelper;
 import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -22,6 +24,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -228,33 +231,45 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
                 (createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
 
 		createPickyWheels$powerSource.clear();
-		for (BlockPos blockPos : getOffsetsToCheck()) {
-			BlockPos targetPos = blockPos.offset(worldPosition);
-			if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
-				createPickyWheels$powerSource.add(targetPos);
-				createPickyWheels$isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
-			}
-		}
+        Vec3 wheelPlane = Vec3.atLowerCornerOf(new Vec3i(1, 1, 1).subtract(Direction.get(Direction.AxisDirection.POSITIVE, getAxis()).getNormal()));
+        int flowS = 0;
+
+        for (BlockPos blockPos : getOffsetsToCheck()) {
+            BlockPos targetPos = blockPos.offset(worldPosition);
+            if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
+                if(Configuration.WATERWHEELS_FLOW.get()) {
+                    Vec3 flowAtPos = getFlowVectorAtPosition(targetPos).multiply(wheelPlane);
+                    if (flowAtPos.lengthSqr() == 0) continue;
+                    flowAtPos = flowAtPos.normalize();
+                    Vec3 normal = Vec3.atLowerCornerOf(blockPos).normalize();
+                    Vec3 positiveMotion = VecHelper.rotate(normal, 90, getAxis());
+                    double dot = flowAtPos.dot(positiveMotion);
+                    if (Math.abs(dot) > .10) flowS += (int) Math.signum(dot);
+                } else flowS += 1;
+
+                createPickyWheels$powerSource.add(targetPos);
+                createPickyWheels$isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
+            }
+        }
+
 		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
+        setFlowScoreAndUpdate(createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite ? flowS : 0);
+        if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
+            award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
 	}
 
 	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
 	private void determineAndApplyFlowScoreMixin(CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
-
 		createPickyWheels$determineViability();
-		setFlowScoreAndUpdate(createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite ? 1 : 0);
-		if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
-			award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
-
 		ci.cancel();
 	}
 
 	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
 	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
 		if (!createPickyWheels$enabled()) return;
-        cir.setReturnValue(createPickyWheels$boost * flowScore * 8 / getSize());
+        cir.setReturnValue(createPickyWheels$boost * Mth.clamp(flowScore, -1, 1) * 8 / getSize());
 	}
 
 	@Override
@@ -262,7 +277,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
-		CreateLang.number(createPickyWheels$boost * flowScore)
+		CreateLang.number(createPickyWheels$boost)
 				.style(ChatFormatting.AQUA)
 				.space()
 				.add(CreateLang.translate("hint.picky_biome_boost")
@@ -286,14 +301,16 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Inject(method = "read", at = @At("TAIL"))
 	private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
 		if (!createPickyWheels$enabled()) return;
-		createPickyWheels$infinite = nbt.contains("Infinite");
-		createPickyWheels$inBiome = nbt.contains("InBiome");
-		createPickyWheels$hasValidSource = nbt.contains("HasValidSource");
+		createPickyWheels$infinite = nbt.getBoolean("Infinite");
+		createPickyWheels$inBiome = nbt.getBoolean("InBiome");
+		createPickyWheels$hasValidSource = nbt.getBoolean("HasValidSource");
 	}
 
 	@Shadow public int flowScore;
 	@Shadow public abstract void setFlowScoreAndUpdate(int score);
 	@Shadow protected abstract int getSize();
+    @Shadow protected abstract Direction.Axis getAxis();
+    @Shadow public abstract Vec3 getFlowVectorAtPosition(BlockPos targetPos);
 	@Shadow protected abstract Set<BlockPos> getOffsetsToCheck();
 	@Shadow public abstract void determineAndApplyFlowScore();
 }

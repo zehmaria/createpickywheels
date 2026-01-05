@@ -2,19 +2,19 @@ plugins {
     id("idea")
     id("eclipse")
     id("maven-publish")
+    id("net.kyori.blossom") version "2.1.0" // https://github.com/KyoriPowered/blossom
+    id("dev.ithundxr.silk") version "0.11.15" // https://github.com/ithundxr/silk
+    id("me.modmuss50.mod-publish-plugin") version "0.8.4" // https://github.com/modmuss50/mod-publish-plugin
     id("net.neoforged.moddev.legacyforge") version "2.0.107" // https://projects.neoforged.net/neoforged/ModDevGradle
     id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.8" // https://github.com/JetBrains/gradle-idea-ext-plugin
 }
 
 apply(from: "./gradle/java.gradle")
-
-boolean dev = System.getenv("RELEASE") == null || System.getenv("RELEASE") == "false"
-ext.buildNumber = System.getenv("BUILD_NUMBER")
-String gitHash = calculateGitHash() + (hasUnstaged() ? "-modified" : "")
+//apply(from: "gradle/property_loader.gradle")
 
 base {
+    group = mod_author + '.' + mod_id
     archivesBaseName = mod_id + "-forge"
-    group = mod_author + '.' + mod_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
     version = minecraft_version + '-' + create_version + '-' + mod_version
 }
 
@@ -36,6 +36,9 @@ idea {
 legacyForge {
     version = "$minecraft_version-$forge_version"
 
+    // TODO - Try turning this on later
+    validateAccessTransformers = false
+
     parchment {
         minecraftVersion = minecraft_version
         mappingsVersion = parchment_version
@@ -48,13 +51,10 @@ legacyForge {
     }
 
     runs {
-        // applies to all the run configs below
         configureEach {
             systemProperty("forge.logging.markers", "")
             systemProperty("forge.logging.console.level", "info")
             jvmArguments = ["-XX:+IgnoreUnrecognizedVMOptions", "-XX:+AllowEnhancedClassRedefinition"]
-            //jvmArgs("-XX:-OmitStackTraceInFastThrow") // uncomment when you get exceptions with null messages etc
-            //jvmArgs "-XX:+UnlockCommercialFeatures" // uncomment for profiling
 
             systemProperty("mixin.debug.export", "true")
             systemProperty("mixin.debug.verbose", "true")
@@ -100,15 +100,14 @@ repositories {
 }
 
 dependencies {
-    //minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
     modImplementation("com.tterrag.registrate:Registrate:${registrate_version}")
-    modImplementation("dev.engine-room.flywheel:flywheel-forge-${flywheel_minecraft_version}:${flywheel_version}")
-    modImplementation("net.createmod.ponder:Ponder-Forge-${ponder_minecraft_version}:${ponder_version}")
-    modImplementation("com.simibubi.create:create-${create_minecraft_version}:${create_version}-${create_version_suffix}:slim") { transitive = false }
+    modCompileOnly("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}")
+    modRuntimeOnly("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+    modImplementation("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
+    modImplementation("com.simibubi.create:create-${minecraft_version}:${create_version}-${create_version_suffix}:slim") { transitive = false }
 
-    if (!Boolean.getBoolean('idea.sync.active')) {
-        annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+    if (!Boolean.getBoolean("idea.sync.active")) {
+        annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
     }
 }
 
@@ -119,18 +118,12 @@ sourceSets.main.resources {
 
 processResources {
     var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            forge_version          : forge_version,
-            neo_version_range      : neo_version_range,
-            create_version_range   : create_version_range,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_long_version       : minecraft_version + "-" + create_version  + "-" + mod_version,
-            mod_author             : mod_author,
-            mod_description        : mod_description
+            mod_id           : mod_id,
+            mod_name         : mod_name,
+            mod_author       : mod_author,
+            mod_description  : mod_description,
+            mod_license      : mod_license,
+            minecraft_version: minecraft_version
     ]
 
     // Replaces FML's magic file.jarVersion string with the correct version at build time.
@@ -149,49 +142,6 @@ jar {
     }
 
     manifest.attributes([
-            "MixinConfigs": "createpickywheels.mixins.json",
-            "Git-Hash"    : gitHash
+            "MixinConfigs": "createlowheated.mixins.json"
     ])
-}
-
-tasks.named("sourcesJar") {
-    manifest.attributes([
-            "Git-Hash": gitHash
-    ])
-}
-
-final slimJar = tasks.register("slimJar", Jar) {
-    archiveClassifier = "slim"
-    from(sourceSets.main.output)
-    from(refmap)
-    manifest.attributes([
-            "MixinConfigs": "createpickywheels.mixins.json",
-            "Git-Hash"    : gitHash
-    ])
-}
-obfuscation.reobfuscate(slimJar, sourceSets.main)
-
-String calculateGitHash() {
-    try {
-        ExecOutput output = providers.exec {
-            commandLine("git", "rev-parse", "HEAD")
-        }
-        return output.standardOutput.asText.get().trim()
-    } catch (Throwable ignored) {
-        return "unknown"
-    }
-}
-
-boolean hasUnstaged() {
-    try {
-        ExecOutput output = providers.exec {
-            commandLine("git", "status", "--porcelain")
-        }
-        String result = output.standardOutput.asText.get().replace("/M gradlew(\\.bat)?/", "").trim()
-        if (!result.isEmpty())
-            println("Found stageable results:\n ${result}\n")
-        return !result.isEmpty()
-    } catch (Throwable ignored) {
-        return false
-    }
 }
