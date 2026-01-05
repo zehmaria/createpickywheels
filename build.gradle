@@ -1,7 +1,6 @@
 plugins {
     id "idea"
     id "eclipse"
-    id "maven-publish"
     id "net.neoforged.moddev" version "2.0.74"
 }
 
@@ -86,7 +85,7 @@ configurations {
 }
 
 repositories {
-    maven { url = "https://mvn.devos.one/snapshots" } // Registrate
+    maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
     maven { url = "https://maven.createmod.net" } // Ponder, Flywheel
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven" } // NeoForge config api port, needed by ponder
     maven { url = "https://www.cursemaven.com" }
@@ -96,9 +95,9 @@ dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
     
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
-    implementation("dev.engine-room.flywheel:flywheel-neoforge-${flywheel_minecraft_version}:${flywheel_version}")
-    implementation("net.createmod.ponder:Ponder-NeoForge-${ponder_minecraft_version}:${ponder_version}")
-    implementation("com.simibubi.create:create-${create_minecraft_version}:${create_version}-${create_version_suffix}") { transitive = false }
+    implementation("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
+    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}-${create_version_suffix}:slim") { transitive = false }
 
     if (!Boolean.getBoolean('idea.sync.active')) {
         //annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
@@ -108,11 +107,8 @@ dependencies {
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
             neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
             "create_version_range" : create_version_range,
-            loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
@@ -137,7 +133,7 @@ tasks.named('jar', Jar).configure {
                 "Implementation-Version"  : project.jar.archiveVersion,
                 "Implementation-Vendor"   : mod_author,
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs": "createpickywheels.mixins.json"
+                "MixinConfigs": "createlowheated.mixins.json"
         ])
     }
 }
