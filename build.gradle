@@ -142,6 +142,6 @@ jar {
     }
 
     manifest.attributes([
-            "MixinConfigs": "createlowheated.mixins.json"
+            "MixinConfigs": "createpickywheels.mixins.json"
     ])
 }

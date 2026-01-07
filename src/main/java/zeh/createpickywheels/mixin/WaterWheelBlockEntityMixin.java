@@ -13,6 +13,7 @@ import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -231,7 +232,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
                 (createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
 
 		createPickyWheels$powerSource.clear();
-        Vec3 wheelPlane = Vec3.atLowerCornerOf(new Vec3i(1, 1, 1).subtract(Direction.get(Direction.AxisDirection.POSITIVE, getAxis()).getNormal()));
+        Vec3 wheelPlane = Vec3.atLowerCornerOf(new Vec3i(1, 1, 1).subtract(Direction.get(AxisDirection.POSITIVE, getAxis()).getNormal()));
         int flowS = 0;
 
         for (BlockPos blockPos : getOffsetsToCheck()) {
@@ -255,14 +256,14 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
         setFlowScoreAndUpdate(createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite ? flowS : 0);
-        if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
-            award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
 	}
 
 	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
 	private void determineAndApplyFlowScoreMixin(CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
 		createPickyWheels$determineViability();
+        if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
+            award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
 		ci.cancel();
 	}
 
