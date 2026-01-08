@@ -304,7 +304,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
         if (createPickyWheels$boost > 0) {
-            CreateLang.number(createPickyWheels$boost)
+            CreateLang.number(createPickyWheels$boost).text("x")
                     .style(ChatFormatting.AQUA)
                     .space()
                     .add(CreateLang.translate("hint.picky_biome_boost")
@@ -312,7 +312,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
                     .forGoggles(tooltip, 1);
 
             double abovePenalty = Configuration.WINDMILLS_ABOVE_PENALTY.get();
-            CreateLang.number((1F - abovePenalty * (1 - createPickyWheels$aboveOf)))
+            CreateLang.number((1F - abovePenalty * (1 - createPickyWheels$aboveOf))).text("x")
                     .style(ChatFormatting.AQUA)
                     .space()
                     .add(CreateLang.translate("hint.picky_height_boost")
