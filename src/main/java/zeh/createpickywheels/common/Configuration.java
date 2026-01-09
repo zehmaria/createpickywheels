@@ -49,13 +49,13 @@ public class Configuration {
 		COMMON_BUILDER.comment("Biome impact on waterwheel").push("biome efficiency");
 
 		WATERWHEELS_BIOME_RPM_BOOST = COMMON_BUILDER.comment("RPM Boost for Waterwheels placed on boosted biomes tag.")
-				.defineInRange("waterwheelBiomeRPMBoost", 1.5, 0, Double.MAX_VALUE);
+				.defineInRange("waterwheelBiomeRPMBoost", 1.0, 0, Double.MAX_VALUE);
 
 		WATERWHEELS_BIOME_RPM_PENALTY = COMMON_BUILDER.comment("RPM Penalty for Waterwheels placed on whitelisted but not on preferential biomes [waterwheel_boosted biome tag].")
 				.defineInRange("waterwheelBiomeRPMPenalty", 0.75, 0, Double.MAX_VALUE);
 
 		WATERWHEELS_BIOME_STRESS_BOOST = COMMON_BUILDER.comment("STRESS Boost for Waterwheels placed on boosted Biomes.")
-				.defineInRange("waterwheelBiomeSTRESSBoost", 1.0, 0, Double.MAX_VALUE);
+				.defineInRange("waterwheelBiomeSTRESSBoost", 1.25, 0, Double.MAX_VALUE);
 
 		WATERWHEELS_BIOME_STRESS_PENALTY = COMMON_BUILDER.comment("STRESS Penalty for Waterwheels placed on whitelisted but not on preferential biomes [waterwheel_boosted biome tag].")
 				.defineInRange("waterwheelBiomeSTRESSPenalty", 0.5, 0, Double.MAX_VALUE);
@@ -75,7 +75,7 @@ public class Configuration {
 				.defineInRange("waterwheelOptimalRPMPenalty", 0.5, 0, Double.MAX_VALUE);
 
 		WATERWHEELS_OPTIMAL_STRESS_BOOST = COMMON_BUILDER.comment("Boost for Waterwheels placed on optimal conditions.")
-				.defineInRange("waterwheelOptimalSTRESSBoost", 1.0, 0, Double.MAX_VALUE);
+				.defineInRange("waterwheelOptimalSTRESSBoost", 1.25, 0, Double.MAX_VALUE);
 
 		WATERWHEELS_OPTIMAL_STRESS_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed under create's default conditions.")
 				.defineInRange("waterwheelOptimalSTRESSPenalty", 0.5, 0, Double.MAX_VALUE);
