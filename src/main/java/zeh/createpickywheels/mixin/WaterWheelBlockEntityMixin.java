@@ -9,7 +9,6 @@ import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import net.createmod.catnip.data.Iterate;
 import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -51,14 +50,12 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	boolean createPickyWheels$inBiome = false;
 	@Unique
 	boolean createPickyWheels$hasValidSource = false;
-	@Unique
-	boolean createPickyWheels$isLava = false;
 
 	@Unique
 	public BlockPos createPickyWheels$root;
 
 	@Unique
-	private final int createPickyWheels$searchedPerTick = 512;
+	private final int createPickyWheels$searchedPerTick = 256;
 	@Unique
 	List<BlockPosEntry> createPickyWheels$frontier = new ArrayList<>();
 	@Unique
@@ -71,13 +68,22 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	List<BlockPos> createPickyWheels$powerSource = new ArrayList<>();
 
 	@Unique
-	protected float createPickyWheels$boost = 0;
+	protected float createPickyWheels$biomeRPMMulti = 0;
+
+	@Unique
+	protected float createPickyWheels$optimalRPMMulti = 0;
+
+	@Unique
+	protected float createPickyWheels$biomeSTRESSMulti = 0;
+
+	@Unique
+	protected float createPickyWheels$optimalSTRESSMulti = 0;
 
 	@Unique
 	protected int createPickyWheels$validationTimer() {
 		int maxBlocks = createPickyWheels$maxBlocks();
 		// Allow enough time for the server's infinite block threshold to be reached
-		int validationTimerMin = 200;
+		int validationTimerMin = 320;
 		return maxBlocks < 0 ? validationTimerMin : Math.max(validationTimerMin, maxBlocks / createPickyWheels$searchedPerTick + 1);
 	}
 	@Unique
@@ -85,18 +91,14 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Unique
 	protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 2; }
 	@Unique
-	protected int createPickyWheels$maxRange() { return Configuration.WATERWHEELS_RANGE.get(); }
+	protected int createPickyWheels$maxRange() { return Configuration.WATERWHEELS_OPTIMAL_RANGE.get(); }
 	@Unique
-	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_THRESHOLD.get(); }
+	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_OPTIMAL_THRESHOLD.get(); }
 	@Unique
 	protected boolean createPickyWheels$enabled() {
 		return Configuration.WATERWHEELS_ENABLED.get() &&
 				(!Configuration.WATERWHEELS_PICKY.get() || getBlockState().getValue(CreatePickyWheels.PICKY));
 	}
-	@Unique
-	protected double createPickyWheels$penalty() { return Configuration.WATERWHEELS_PENALTY.get(); }
-    @Unique
-    protected double createPickyWheels$baseBoost() { return Configuration.WATERWHEELS_BASE_BOOST.get(); }
 
 	@Unique
 	public void createPickyWheels$reset() {
@@ -137,6 +139,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 
 			FluidState fluidState = level != null ? level.getFluidState(currentPos) : null;
 			if (fluidState == null || fluidState.isEmpty()) continue;
+
 			Fluid currentFluid = FluidHelper.convertToStill(fluidState.getType());
 			if (!currentFluid.isSame(fluid)) continue;
 
@@ -193,13 +196,13 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		if (!createPickyWheels$enabled()) return;
 		if (level == null || level.isClientSide()) return;
 		if (!createPickyWheels$inBiome || !createPickyWheels$hasValidSource) return;
-		if (!createPickyWheels$frontier.isEmpty() && level != null) {
+		if (!createPickyWheels$frontier.isEmpty()) {
 			Fluid fluid = level.getFluidState(createPickyWheels$root).getType();
 			if (fluid != Fluids.EMPTY) createPickyWheels$continueSearch(fluid);
 			return;
 		}
 		if (createPickyWheels$revalidateIn > 0) createPickyWheels$revalidateIn--;
-		if (createPickyWheels$frontier.isEmpty() && createPickyWheels$revalidateIn == 0) {
+		if (createPickyWheels$revalidateIn == 0) {
 			createPickyWheels$visited.clear();
 			createPickyWheels$frontier.add(new BlockPosEntry(createPickyWheels$root, 0));
 		}
@@ -225,20 +228,26 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	}
 
 	@Unique
-	public void createPickyWheels$determineViability() {
-		if (level == null) return;
+	public boolean createPickyWheels$determineViability() {
+		if (level == null) return false;
 		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_WHITELIST);
-        createPickyWheels$boost = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ? (float) createPickyWheels$baseBoost() :
-                (createPickyWheels$inBiome ? (float) createPickyWheels$penalty() : 0);
+		createPickyWheels$biomeRPMMulti = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ?
+				Configuration.WATERWHEELS_BIOME_RPM_BOOST.get().floatValue() :
+				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_RPM_PENALTY.get().floatValue() : 0);
+
+		createPickyWheels$biomeSTRESSMulti = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ?
+				Configuration.WATERWHEELS_BIOME_STRESS_BOOST.get().floatValue() :
+				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_STRESS_PENALTY.get().floatValue() : 0);
 
 		createPickyWheels$powerSource.clear();
         Vec3 wheelPlane = Vec3.atLowerCornerOf(new Vec3i(1, 1, 1).subtract(Direction.get(AxisDirection.POSITIVE, getAxis()).getNormal()));
         int flowS = 0;
+		boolean lava = false;
 
         for (BlockPos blockPos : getOffsetsToCheck()) {
             BlockPos targetPos = blockPos.offset(worldPosition);
             if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
-                if(Configuration.WATERWHEELS_FLOW.get()) {
+                if(Configuration.WATERWHEELS_OPTIMAL_FLOW.get()) {
                     Vec3 flowAtPos = getFlowVectorAtPosition(targetPos).multiply(wheelPlane);
                     if (flowAtPos.lengthSqr() == 0) continue;
                     flowAtPos = flowAtPos.normalize();
@@ -249,28 +258,58 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
                 } else flowS += 1;
 
                 createPickyWheels$powerSource.add(targetPos);
-                createPickyWheels$isLava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
+				lava |= FluidHelper.isLava(level.getFluidState(targetPos).getType());
             }
         }
 
 		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
-        setFlowScoreAndUpdate(createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite ? flowS : 0);
+
+		if (createPickyWheels$isOptimal()) {
+			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_OPTIMAL_RPM_BOOST.get().floatValue();
+			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_OPTIMAL_STRESS_BOOST.get().floatValue();
+			setFlowScoreAndUpdate(flowS);
+			if (!level.isClientSide()) award(lava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
+		} else {
+			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_OPTIMAL_RPM_PENALTY.get().floatValue();
+			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_OPTIMAL_STRESS_PENALTY.get().floatValue();
+		}
+
+		return createPickyWheels$isOptimal();
+	}
+
+	@Unique
+	private boolean createPickyWheels$isOptimal() {
+		return createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite;
+	}
+
+	@Unique
+	private boolean createPickyWheels$isSubOptimal() {
+		if (createPickyWheels$isOptimal()) return false;
+		return createPickyWheels$biomeRPMMulti > 0 && createPickyWheels$optimalRPMMulti > 0 && flowScore != 0;
+	}
+
+	@Unique
+	private boolean createPickyWheels$isSubOptimalBiome() {
+		return createPickyWheels$biomeRPMMulti > 0 && createPickyWheels$biomeRPMMulti < Configuration.WATERWHEELS_BIOME_RPM_BOOST.get();
 	}
 
 	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
 	private void determineAndApplyFlowScoreMixin(CallbackInfo ci) {
 		if (!createPickyWheels$enabled()) return;
-		createPickyWheels$determineViability();
-        if (level != null && createPickyWheels$inBiome && createPickyWheels$hasValidSource && createPickyWheels$infinite && !level.isClientSide())
-            award(createPickyWheels$isLava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
-		ci.cancel();
+		if (createPickyWheels$determineViability() || !Configuration.WATERWHEELS_LOSDOS.get()) ci.cancel();
 	}
 
 	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
 	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
 		if (!createPickyWheels$enabled()) return;
-        cir.setReturnValue(createPickyWheels$boost * Mth.clamp(flowScore, -1, 1) * 8 / getSize());
+		cir.setReturnValue((createPickyWheels$biomeRPMMulti * createPickyWheels$optimalRPMMulti) *
+				Mth.clamp(flowScore, -1, 1) * 8 / getSize());
+	}
+
+	@Override
+	public float calculateAddedStressCapacity() {
+		return (createPickyWheels$biomeSTRESSMulti * createPickyWheels$optimalSTRESSMulti) * super.calculateAddedStressCapacity();
 	}
 
 	@Override
@@ -278,33 +317,55 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
-		CreateLang.number(createPickyWheels$boost)
-				.style(ChatFormatting.AQUA)
-				.space()
-				.add(CreateLang.translate("hint.picky_biome_boost")
-						.style(ChatFormatting.DARK_GRAY))
+		CreateLang.number(createPickyWheels$biomeRPMMulti * createPickyWheels$biomeSTRESSMulti)
+				.text("x")
+				.style(ChatFormatting.AQUA).space()
+				.add(CreateLang.translate("hint.picky_biome_boost").style(ChatFormatting.DARK_GRAY))
+				.forGoggles(tooltip, 1);
+		CreateLang.number(createPickyWheels$optimalRPMMulti * createPickyWheels$optimalSTRESSMulti * Math.signum(Mth.abs(flowScore)))
+				.text("x")
+				.style(ChatFormatting.AQUA).space()
+				.add(CreateLang.translate("hint.picky_optimal_boost").style(ChatFormatting.DARK_GRAY))
 				.forGoggles(tooltip, 1);
 
-		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
-		if (!createPickyWheels$hasValidSource && createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
-		if (!createPickyWheels$infinite && createPickyWheels$inBiome && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
+		if (createPickyWheels$isOptimal() && flowScore != 0) {
+			CreateLang.translate("hint.picky_optimal_notice").style(ChatFormatting.GREEN).forGoggles(tooltip);
+		} else if (createPickyWheels$isSubOptimal()) {
+			CreateLang.translate("hint.picky_optimal_warn").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+		} else {
+			CreateLang.translate("hint.picky_optimal_error").style(ChatFormatting.RED).forGoggles(tooltip);
+		}
 
-		return addToGoggleTooltip;
+		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
+		if (createPickyWheels$isSubOptimalBiome()) TooltipHelper.addHint(tooltip, "hint.waterwheel_suboptimal_biome");
+		if (!createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
+		if (!createPickyWheels$infinite && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
+
+		return true;
 	}
+
 	@Inject(method = "write", at = @At("TAIL"))
-	private void write(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+	private void write(CompoundTag compound, boolean clientPacket, CallbackInfo info) {
 		if (!createPickyWheels$enabled()) return;
-		if (createPickyWheels$infinite) NBTHelper.putMarker(nbt, "Infinite");
-		if (createPickyWheels$inBiome) NBTHelper.putMarker(nbt, "InBiome");
-		if (createPickyWheels$hasValidSource) NBTHelper.putMarker(nbt, "HasValidSource");
+		compound.putFloat("biomeRPMMulti", createPickyWheels$biomeRPMMulti);
+		compound.putFloat("optimalRPMMulti", createPickyWheels$optimalRPMMulti);
+		compound.putFloat("biomeSTRESSMulti", createPickyWheels$biomeSTRESSMulti);
+		compound.putFloat("optimalSTRESSMulti", createPickyWheels$optimalSTRESSMulti);
+		compound.putBoolean("Infinite", createPickyWheels$infinite);
+		compound.putBoolean("InBiome", createPickyWheels$inBiome);
+		compound.putBoolean("HasValidSource", createPickyWheels$hasValidSource);
 	}
 
 	@Inject(method = "read", at = @At("TAIL"))
-	private void read(CompoundTag nbt, boolean clientPacket, CallbackInfo info) {
+	private void read(CompoundTag compound, boolean clientPacket, CallbackInfo info) {
 		if (!createPickyWheels$enabled()) return;
-		createPickyWheels$infinite = nbt.getBoolean("Infinite");
-		createPickyWheels$inBiome = nbt.getBoolean("InBiome");
-		createPickyWheels$hasValidSource = nbt.getBoolean("HasValidSource");
+		createPickyWheels$biomeRPMMulti = compound.getFloat("biomeRPMMulti");
+		createPickyWheels$optimalRPMMulti = compound.getFloat("optimalRPMMulti");
+		createPickyWheels$biomeSTRESSMulti = compound.getFloat("biomeSTRESSMulti");
+		createPickyWheels$optimalSTRESSMulti = compound.getFloat("optimalSTRESSMulti");
+		createPickyWheels$infinite = compound.getBoolean("Infinite");
+		createPickyWheels$inBiome = compound.getBoolean("InBiome");
+		createPickyWheels$hasValidSource = compound.getBoolean("HasValidSource");
 	}
 
 	@Shadow public int flowScore;
