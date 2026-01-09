@@ -124,7 +124,7 @@ jar {
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
-            "mod_version"           : mod_version,
+            "mod_version"           : version,
             "mod_id"                : mod_id,
             "mod_name"              : mod_name,
             "mod_author"            : mod_author,
