@@ -115,7 +115,7 @@ public class Configuration {
 		WINDMILLS_REQUIRED_RANGE_POINTS = COMMON_BUILDER.comment("The minimum amount of points that must hit windmillRequiredRange.")
 				.defineInRange("windmillRequiredRangePoints", 128, 1, Integer.MAX_VALUE);
 
-		WINDMILLS_MAX_RANGE = COMMON_BUILDER.comment("The maximum distance a waterwheel can consider air blocks from.")
+		WINDMILLS_MAX_RANGE = COMMON_BUILDER.comment("The maximum distance a windmills can consider air blocks from.")
 				.defineInRange("windmillMaxRange", 32, 1, Integer.MAX_VALUE);
 
 		WINDMILLS_ABOVE_PENALTY = COMMON_BUILDER.comment("The percentage of Generated Speed only given if windmills are raised enough.")
