@@ -15,13 +15,13 @@ public class Configuration {
 	public static ForgeConfigSpec.DoubleValue WATERWHEELS_BIOME_RPM_PENALTY;
 	public static ForgeConfigSpec.DoubleValue WATERWHEELS_BIOME_STRESS_BOOST;
 	public static ForgeConfigSpec.DoubleValue WATERWHEELS_BIOME_STRESS_PENALTY;
-	public static ForgeConfigSpec.BooleanValue WATERWHEELS_OPTIMAL_FLOW;
-	public static ForgeConfigSpec.DoubleValue WATERWHEELS_OPTIMAL_RPM_BOOST;
-	public static ForgeConfigSpec.DoubleValue WATERWHEELS_OPTIMAL_RPM_PENALTY;
-	public static ForgeConfigSpec.DoubleValue WATERWHEELS_OPTIMAL_STRESS_BOOST;
-	public static ForgeConfigSpec.DoubleValue WATERWHEELS_OPTIMAL_STRESS_PENALTY;
-	public static ForgeConfigSpec.IntValue WATERWHEELS_OPTIMAL_THRESHOLD;
-	public static ForgeConfigSpec.IntValue WATERWHEELS_OPTIMAL_RANGE;
+	public static ForgeConfigSpec.BooleanValue WATERWHEELS_SOURCE_FLOW;
+	public static ForgeConfigSpec.DoubleValue WATERWHEELS_SOURCE_RPM_BOOST;
+	public static ForgeConfigSpec.DoubleValue WATERWHEELS_SOURCE_RPM_PENALTY;
+	public static ForgeConfigSpec.DoubleValue WATERWHEELS_SOURCE_STRESS_BOOST;
+	public static ForgeConfigSpec.DoubleValue WATERWHEELS_SOURCE_STRESS_PENALTY;
+	public static ForgeConfigSpec.IntValue WATERWHEELS_SOURCE_THRESHOLD;
+	public static ForgeConfigSpec.IntValue WATERWHEELS_SOURCE_RANGE;
 
 	public static ForgeConfigSpec.BooleanValue WINDMILLS_ENABLED;
 
@@ -65,31 +65,31 @@ public class Configuration {
 
 		COMMON_BUILDER.pop();
 
-		COMMON_BUILDER.comment("Body of water requirement impact (similar to infinite fluid extraction from pulley)").push("optimal condition");
+		COMMON_BUILDER.comment("Body of water requirement impact (similar to infinite fluid extraction from pulley)").push("power source condition");
 
 		WATERWHEELS_LOSDOS = COMMON_BUILDER.comment("When enabled waterwheels also work when under create's default conditions but at a penalty")
 				.define("waterwheelsPorqueNoLosDos", true);
 
-		WATERWHEELS_OPTIMAL_RPM_BOOST = COMMON_BUILDER.comment("Boost for Waterwheels placed on optimal conditions.")
-				.defineInRange("waterwheelOptimalRPMBoost", 1.5, 0, Double.MAX_VALUE);
+		WATERWHEELS_SOURCE_RPM_BOOST = COMMON_BUILDER.comment("Boost for Waterwheels placed on optimal conditions.")
+				.defineInRange("waterwheelSourceRPMBoost", 1.5, 0, Double.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_RPM_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed under create's default conditions.")
-				.defineInRange("waterwheelOptimalRPMPenalty", 0.5, 0, Double.MAX_VALUE);
+		WATERWHEELS_SOURCE_RPM_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed under create's default conditions.")
+				.defineInRange("waterwheelSourceRPMPenalty", 0.5, 0, Double.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_STRESS_BOOST = COMMON_BUILDER.comment("Boost for Waterwheels placed on optimal conditions.")
-				.defineInRange("waterwheelOptimalSTRESSBoost", 1.25, 0, Double.MAX_VALUE);
+		WATERWHEELS_SOURCE_STRESS_BOOST = COMMON_BUILDER.comment("Boost for Waterwheels placed on optimal conditions.")
+				.defineInRange("waterwheelSourceSTRESSBoost", 1.25, 0, Double.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_STRESS_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed under create's default conditions.")
-				.defineInRange("waterwheelOptimalSTRESSPenalty", 0.5, 0, Double.MAX_VALUE);
+		WATERWHEELS_SOURCE_STRESS_PENALTY = COMMON_BUILDER.comment("Penalty for Waterwheels placed under create's default conditions.")
+				.defineInRange("waterwheelSourceSTRESSPenalty", 0.5, 0, Double.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_THRESHOLD = COMMON_BUILDER.comment("The minimum amount of fluid blocks the waterwheel needs to find before rotation begins.")
-				.defineInRange("waterwheelOptimalThreshold", 512, 1, Integer.MAX_VALUE);
+		WATERWHEELS_SOURCE_THRESHOLD = COMMON_BUILDER.comment("The minimum amount of fluid blocks the waterwheel needs to find before rotation begins.")
+				.defineInRange("waterwheelSourceThreshold", 512, 1, Integer.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_RANGE = COMMON_BUILDER.comment("The maximum distance a waterwheel can consider fluid blocks from.")
-				.defineInRange("waterwheelOptimalRange", 64, 1, Integer.MAX_VALUE);
+		WATERWHEELS_SOURCE_RANGE = COMMON_BUILDER.comment("The maximum distance a waterwheel can consider fluid blocks from.")
+				.defineInRange("waterwheelSourceRange", 64, 1, Integer.MAX_VALUE);
 
-		WATERWHEELS_OPTIMAL_FLOW = COMMON_BUILDER.comment("When enabled boosted waterwheels require correct flow (like in TerraFirmaCraft's water river)")
-				.define("waterwheelsOptimalRequiresFlow", false);
+		WATERWHEELS_SOURCE_FLOW = COMMON_BUILDER.comment("When enabled boosted waterwheels require correct flow (like in TerraFirmaCraft's water river)")
+				.define("waterwheelsSourceRequiresFlow", false);
 
 		COMMON_BUILDER.pop();
 
@@ -115,7 +115,7 @@ public class Configuration {
 		WINDMILLS_REQUIRED_RANGE_POINTS = COMMON_BUILDER.comment("The minimum amount of points that must hit windmillRequiredRange.")
 				.defineInRange("windmillRequiredRangePoints", 128, 1, Integer.MAX_VALUE);
 
-		WINDMILLS_MAX_RANGE = COMMON_BUILDER.comment("The maximum distance a windmills can consider air blocks from.")
+		WINDMILLS_MAX_RANGE = COMMON_BUILDER.comment("The maximum distance a windmill can consider air blocks from.")
 				.defineInRange("windmillMaxRange", 32, 1, Integer.MAX_VALUE);
 
 		WINDMILLS_ABOVE_PENALTY = COMMON_BUILDER.comment("The percentage of Generated Speed only given if windmills are raised enough.")

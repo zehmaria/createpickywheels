@@ -49,6 +49,8 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Unique
 	boolean createPickyWheels$inBiome = false;
 	@Unique
+	boolean createPickyWheels$biomeBoosted = false;
+	@Unique
 	boolean createPickyWheels$hasValidSource = false;
 
 	@Unique
@@ -91,9 +93,9 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Unique
 	protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 2; }
 	@Unique
-	protected int createPickyWheels$maxRange() { return Configuration.WATERWHEELS_OPTIMAL_RANGE.get(); }
+	protected int createPickyWheels$maxRange() { return Configuration.WATERWHEELS_SOURCE_RANGE.get(); }
 	@Unique
-	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_OPTIMAL_THRESHOLD.get(); }
+	protected int createPickyWheels$maxBlocks() { return Configuration.WATERWHEELS_SOURCE_THRESHOLD.get(); }
 	@Unique
 	protected boolean createPickyWheels$enabled() {
 		return Configuration.WATERWHEELS_ENABLED.get() &&
@@ -231,12 +233,11 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	public boolean createPickyWheels$determineViability() {
 		if (level == null) return false;
 		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_WHITELIST);
-		createPickyWheels$biomeRPMMulti = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ?
-				Configuration.WATERWHEELS_BIOME_RPM_BOOST.get().floatValue() :
-				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_RPM_PENALTY.get().floatValue() : 0);
+		createPickyWheels$biomeBoosted = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED);
 
-		createPickyWheels$biomeSTRESSMulti = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED) ?
-				Configuration.WATERWHEELS_BIOME_STRESS_BOOST.get().floatValue() :
+		createPickyWheels$biomeRPMMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_RPM_BOOST.get().floatValue() :
+				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_RPM_PENALTY.get().floatValue() : 0);
+		createPickyWheels$biomeSTRESSMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_STRESS_BOOST.get().floatValue() :
 				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_STRESS_PENALTY.get().floatValue() : 0);
 
 		createPickyWheels$powerSource.clear();
@@ -247,7 +248,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
         for (BlockPos blockPos : getOffsetsToCheck()) {
             BlockPos targetPos = blockPos.offset(worldPosition);
             if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
-                if(Configuration.WATERWHEELS_OPTIMAL_FLOW.get()) {
+                if(Configuration.WATERWHEELS_SOURCE_FLOW.get()) {
                     Vec3 flowAtPos = getFlowVectorAtPosition(targetPos).multiply(wheelPlane);
                     if (flowAtPos.lengthSqr() == 0) continue;
                     flowAtPos = flowAtPos.normalize();
@@ -266,13 +267,13 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
 
 		if (createPickyWheels$isOptimal()) {
-			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_OPTIMAL_RPM_BOOST.get().floatValue();
-			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_OPTIMAL_STRESS_BOOST.get().floatValue();
+			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_BOOST.get().floatValue();
+			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_BOOST.get().floatValue();
 			setFlowScoreAndUpdate(flowS);
 			if (!level.isClientSide()) award(lava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
 		} else {
-			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_OPTIMAL_RPM_PENALTY.get().floatValue();
-			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_OPTIMAL_STRESS_PENALTY.get().floatValue();
+			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_PENALTY.get().floatValue();
+			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_PENALTY.get().floatValue();
 		}
 
 		return createPickyWheels$isOptimal();
@@ -317,27 +318,41 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		boolean addToGoggleTooltip = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 		if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
+		CreateLang.translate("hint.picky_efficiency_pre").style(ChatFormatting.DARK_GRAY).space()
+				.add(CreateLang.number(createPickyWheels$biomeRPMMulti * createPickyWheels$biomeSTRESSMulti *
+								createPickyWheels$optimalRPMMulti * createPickyWheels$optimalSTRESSMulti * Math.signum(Mth.abs(flowScore)))
+						.text("x")
+						.style(ChatFormatting.AQUA).space())
+				.add(CreateLang.translate("hint.picky_efficiency").style(ChatFormatting.DARK_GRAY))
+				.forGoggles(tooltip);
+
 		CreateLang.number(createPickyWheels$biomeRPMMulti * createPickyWheels$biomeSTRESSMulti)
 				.text("x")
-				.style(ChatFormatting.AQUA).space()
+				.style(ChatFormatting.DARK_AQUA).space()
 				.add(CreateLang.translate("hint.picky_biome_boost").style(ChatFormatting.DARK_GRAY))
-				.forGoggles(tooltip, 1);
+				.forGoggles(tooltip, 2);
 		CreateLang.number(createPickyWheels$optimalRPMMulti * createPickyWheels$optimalSTRESSMulti * Math.signum(Mth.abs(flowScore)))
 				.text("x")
-				.style(ChatFormatting.AQUA).space()
+				.style(ChatFormatting.DARK_AQUA).space()
 				.add(CreateLang.translate("hint.picky_optimal_boost").style(ChatFormatting.DARK_GRAY))
-				.forGoggles(tooltip, 1);
+				.forGoggles(tooltip, 2);
 
-		if (createPickyWheels$isOptimal() && flowScore != 0) {
-			CreateLang.translate("hint.picky_optimal_notice").style(ChatFormatting.GREEN).forGoggles(tooltip);
-		} else if (createPickyWheels$isSubOptimal()) {
-			CreateLang.translate("hint.picky_optimal_warn").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+		if (!createPickyWheels$inBiome) {
+			CreateLang.translate("hint.picky_biome_error").style(ChatFormatting.RED).forGoggles(tooltip);
+		} else if (createPickyWheels$biomeBoosted) {
+			CreateLang.translate("hint.picky_biome_notice").style(ChatFormatting.GREEN).forGoggles(tooltip);
 		} else {
-			CreateLang.translate("hint.picky_optimal_error").style(ChatFormatting.RED).forGoggles(tooltip);
+			CreateLang.translate("hint.picky_biome_warn").style(ChatFormatting.YELLOW).forGoggles(tooltip);
 		}
 
-		if (!createPickyWheels$inBiome) TooltipHelper.addHint(tooltip, "hint.waterwheel_biome");
-		if (createPickyWheels$isSubOptimalBiome()) TooltipHelper.addHint(tooltip, "hint.waterwheel_suboptimal_biome");
+		if (createPickyWheels$isOptimal() && flowScore != 0) {
+			CreateLang.translate("hint.picky_source_notice").style(ChatFormatting.GREEN).forGoggles(tooltip);
+		} else if (createPickyWheels$isSubOptimal()) {
+			CreateLang.translate("hint.picky_source_warn").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+		} else {
+			CreateLang.translate("hint.picky_source_error").style(ChatFormatting.RED).forGoggles(tooltip);
+		}
+
 		if (!createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_source");
 		if (!createPickyWheels$infinite && createPickyWheels$hasValidSource) TooltipHelper.addHint(tooltip, "hint.waterwheel_infinite");
 
@@ -353,6 +368,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		compound.putFloat("optimalSTRESSMulti", createPickyWheels$optimalSTRESSMulti);
 		compound.putBoolean("Infinite", createPickyWheels$infinite);
 		compound.putBoolean("InBiome", createPickyWheels$inBiome);
+		compound.putBoolean("BiomeBoosted", createPickyWheels$biomeBoosted);
 		compound.putBoolean("HasValidSource", createPickyWheels$hasValidSource);
 	}
 
@@ -365,6 +381,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$optimalSTRESSMulti = compound.getFloat("optimalSTRESSMulti");
 		createPickyWheels$infinite = compound.getBoolean("Infinite");
 		createPickyWheels$inBiome = compound.getBoolean("InBiome");
+		createPickyWheels$biomeBoosted = compound.getBoolean("BiomeBoosted");
 		createPickyWheels$hasValidSource = compound.getBoolean("HasValidSource");
 	}
 
