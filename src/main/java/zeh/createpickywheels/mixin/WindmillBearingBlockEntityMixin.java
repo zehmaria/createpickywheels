@@ -304,20 +304,25 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         if (!createPickyWheels$enabled()) return addToGoggleTooltip;
 
         if (createPickyWheels$boost > 0) {
-            CreateLang.number(createPickyWheels$boost).text("x")
-                    .style(ChatFormatting.AQUA)
-                    .space()
-                    .add(CreateLang.translate("hint.picky_biome_boost")
-                            .style(ChatFormatting.DARK_GRAY))
-                    .forGoggles(tooltip, 1);
-
             double abovePenalty = Configuration.WINDMILLS_ABOVE_PENALTY.get();
+            int flow = createPickyWheels$hasFlow ? 1 : 0;
+
+            CreateLang.translate("hint.picky_efficiency_pre").style(ChatFormatting.DARK_GRAY).space()
+                    .add(CreateLang.number(flow * createPickyWheels$boost * (1F - abovePenalty * (1 - createPickyWheels$aboveOf)))
+                            .text("x")
+                            .style(ChatFormatting.AQUA).space())
+                    .add(CreateLang.translate("hint.picky_efficiency").style(ChatFormatting.DARK_GRAY))
+                    .forGoggles(tooltip);
+
+            CreateLang.number(createPickyWheels$boost).text("x")
+                    .style(ChatFormatting.DARK_AQUA).space()
+                    .add(CreateLang.translate("hint.picky_biome_boost").style(ChatFormatting.DARK_GRAY))
+                    .forGoggles(tooltip, 2);
+
             CreateLang.number((1F - abovePenalty * (1 - createPickyWheels$aboveOf))).text("x")
-                    .style(ChatFormatting.AQUA)
-                    .space()
-                    .add(CreateLang.translate("hint.picky_height_boost")
-                            .style(ChatFormatting.DARK_GRAY))
-                    .forGoggles(tooltip, 1);
+                    .style(ChatFormatting.DARK_AQUA).space()
+                    .add(CreateLang.translate("hint.picky_height_boost").style(ChatFormatting.DARK_GRAY))
+                    .forGoggles(tooltip, 2);
         }
 
         if (!createPickyWheels$isViable && running) TooltipHelper.addHint(tooltip, "hint.windmill_biome");
