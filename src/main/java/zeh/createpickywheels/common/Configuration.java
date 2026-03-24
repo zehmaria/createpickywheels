@@ -106,14 +106,14 @@ public class Configuration {
 		WINDMILLS_PENALTY = COMMON_BUILDER.comment("Penalty for Windmills placed on whitelisted but not on preferential biomes [windmills_boosted biome tag].")
 				.defineInRange("windmillPenalty", 0.75, 0, Double.MAX_VALUE);
 
-		WINDMILLS_THRESHOLD = COMMON_BUILDER.comment("The minimum floor area required. Default: 1/4 of the max area [PI * 32 ^ 2].")
-				.defineInRange("windmillThreshold", 804, 1, Integer.MAX_VALUE);
+		WINDMILLS_THRESHOLD = COMMON_BUILDER.comment("The minimum floor area required. Default: 1/4 of the max area [PI * 32 ^ 2]. Set this and windmillRequiredRangePoints to zero, to disable area check.")
+				.defineInRange("windmillThreshold", 804, 0, Integer.MAX_VALUE);
 
-		WINDMILLS_REQUIRED_RANGE = COMMON_BUILDER.comment("The minimum length of air current required.")
+		WINDMILLS_REQUIRED_RANGE = COMMON_BUILDER.comment("The minimum distance for it to consider a valid air current source.")
 				.defineInRange("windmillRequiredRange", 24, 1, Integer.MAX_VALUE);
 
-		WINDMILLS_REQUIRED_RANGE_POINTS = COMMON_BUILDER.comment("The minimum amount of points that must hit windmillRequiredRange.")
-				.defineInRange("windmillRequiredRangePoints", 128, 1, Integer.MAX_VALUE);
+		WINDMILLS_REQUIRED_RANGE_POINTS = COMMON_BUILDER.comment("The minimum amount of points that must hit windmillRequiredRange. Set this and windmillThreshold to zero, to disable area check.")
+				.defineInRange("windmillRequiredRangePoints", 128, 0, Integer.MAX_VALUE);
 
 		WINDMILLS_MAX_RANGE = COMMON_BUILDER.comment("The maximum distance a windmill can consider air blocks from.")
 				.defineInRange("windmillMaxRange", 32, 1, Integer.MAX_VALUE);
