@@ -1,5 +1,6 @@
 package zeh.createpickywheels.mixin;
 
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.bearing.BearingContraption;
 import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
 import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
@@ -20,6 +21,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -80,7 +82,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
     @Unique
     protected void createPickyWheels$setValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer(); }
     @Unique
-    protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 2; }
+    protected void createPickyWheels$setLongValidationTimer() { createPickyWheels$revalidateIn = createPickyWheels$validationTimer() * 3; }
     @Unique
     protected int createPickyWheels$maxRange() { return Configuration.WINDMILLS_MAX_RANGE.get(); }
     @Unique
@@ -121,10 +123,20 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
         int requiredRangeSq = requiredRange * requiredRange;
 
         Axis axis = movedContraption.getRotationAxis();
+        AABB box = movedContraption.getBoundingBox();
         Direction dirA = Iterate.directionsInAxis(axis)[0];
         Direction dirB = Iterate.directionsInAxis(axis)[1];
-        int sails = ((BearingContraption) movedContraption.getContraption()).getSailBlocks();
-        float rh = Mth.sqrt(sails);
+        int deltaH, aaH;
+        if (axis.equals(Axis.X)) {
+            aaH = (int) Mth.abs((float) (getBlockPosition().getX() - box.minX));
+            deltaH = Mth.abs((int) (box.maxX - box.minX));
+        } else if (axis.equals(Axis.Y)) {
+            aaH = (int) Mth.abs((float) (getBlockPosition().getY() - box.minY));
+            deltaH = Mth.abs((int) (box.maxY - box.minY));
+        } else {
+            aaH = (int) Mth.abs((float) (getBlockPosition().getZ() -  box.minZ));
+            deltaH = Mth.abs((int)(box.maxZ - box.minZ));
+        }
 
         for (int i = 0; i < createPickyWheels$searchedPerTick && !frontier.isEmpty() && (visited.size() <= maxBlocks || createPickyWheels$currents <= createPickyWheels$requiredRangePoints()); i++) {
             BlockPosEntry entry = frontier.removeFirst();
@@ -134,33 +146,23 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
             if (visited.contains(currentPos)) continue; else visited.add(currentPos);
             if (!level.isLoaded(currentPos)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
 
-            BlockState blockState = level.getBlockState(currentPos);
-            if (!blockState.isAir()) continue;
             for (Direction side : Iterate.directions) {
                 if (dirA == side || dirB == side) continue;
-                int k = 0;
                 BlockPos offsetPos = currentPos.relative(side);
-
                 if (!level.isLoaded(offsetPos)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
                 if (visited.contains(offsetPos) || offsetPos.distSqr(createPickyWheels$root) > maxRangeSq) continue;
-                if (level.getBlockState(offsetPos).isAir()) k++;
-                for (int j = 0; j <= rh; j++) {
-                    BlockPos offsetA = offsetPos.relative(dirA);
-                    if (!level.isLoaded(offsetA)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
-                    if (level.getBlockState(offsetA).isAir()) k++;
-                    offsetPos = offsetA;
-                }
-                offsetPos = currentPos.relative(side);
-                for (int j = 0; j <= rh; j++) {
-                    BlockPos offsetB = offsetPos.relative(dirB);
-                    if (!level.isLoaded(offsetB)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
-                    if (level.getBlockState(offsetB).isAir()) k++;
-                    offsetPos = offsetB;
-                }
 
-                if (k >= rh)  {
-                    offsetPos = currentPos.relative(side);
-                    frontier.add(new BlockPosEntry(offsetPos, entry.distance() + 1));
+                int k = 0;
+                offsetPos = offsetPos.relative(dirB, aaH);
+                for (int j = 0; j <= deltaH; j++) {
+                    offsetPos = offsetPos.relative(dirA);
+                    if (!level.isLoaded(offsetPos)) throw new FluidManipulationBehaviour.ChunkNotLoadedException();
+                    if (level.getBlockState(offsetPos).isAir()) k++;
+                    if (k >= 2 * deltaH/3)  {
+                        offsetPos = currentPos.relative(side);
+                        frontier.add(new BlockPosEntry(offsetPos, entry.distance() + 1));
+                        break;
+                    }
                 }
             }
         }
@@ -179,7 +181,7 @@ public abstract class WindmillBearingBlockEntityMixin extends MechanicalBearingB
             return;
         }
 
-        if (createPickyWheels$currents > createPickyWheels$requiredRangePoints() && createPickyWheels$visited.size() > createPickyWheels$maxBlocks()) {
+        if (createPickyWheels$currents >= createPickyWheels$requiredRangePoints() && createPickyWheels$visited.size() >= createPickyWheels$maxBlocks()) {
             createPickyWheels$currents = 0;
             createPickyWheels$frontier.clear();
             if (!createPickyWheels$hasFlow) {
