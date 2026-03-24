@@ -123,7 +123,8 @@ processResources {
             mod_author       : mod_author,
             mod_description  : mod_description,
             mod_license      : mod_license,
-            minecraft_version: minecraft_version
+            minecraft_version: minecraft_version,
+            mod_version      : minecraft_version + '-' + create_version + '-' + mod_version
     ]
 
     // Replaces FML's magic file.jarVersion string with the correct version at build time.
