@@ -14,6 +14,8 @@ public class Configuration {
 	public static ModConfigSpec.DoubleValue WATERWHEELS_BIOME_STRESS_BOOST;
 	public static ModConfigSpec.DoubleValue WATERWHEELS_BIOME_STRESS_PENALTY;
 	public static ModConfigSpec.BooleanValue WATERWHEELS_SOURCE_FLOW;
+	public static ModConfigSpec.BooleanValue WATERWHEELS_ACCEPTS_FLOWING;
+	public static ModConfigSpec.IntValue WATERWHEELS_MINIMUM_SHALLOWNESS;
 	public static ModConfigSpec.DoubleValue WATERWHEELS_SOURCE_RPM_BOOST;
 	public static ModConfigSpec.DoubleValue WATERWHEELS_SOURCE_RPM_PENALTY;
 	public static ModConfigSpec.DoubleValue WATERWHEELS_SOURCE_STRESS_BOOST;
@@ -88,6 +90,12 @@ public class Configuration {
 
 		WATERWHEELS_SOURCE_FLOW = COMMON_BUILDER.comment("When enabled boosted waterwheels require correct flow (like in TerraFirmaCraft's water river)")
 				.define("waterwheelsSourceRequiresFlow", false);
+
+		WATERWHEELS_ACCEPTS_FLOWING = COMMON_BUILDER.comment("When enabled waterwheels accepts flowing water in source calculation")
+				.define("waterwheelsAcceptsFlowing", false);
+
+		WATERWHEELS_MINIMUM_SHALLOWNESS = COMMON_BUILDER.comment("Minimum level of shallowness required to accept flowing water in source calculation")
+				.defineInRange("waterwheelsMinimumShallowness", 3, 1, 7);
 
 		COMMON_BUILDER.pop();
 
