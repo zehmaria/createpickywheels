@@ -116,16 +116,17 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		if (createPickyWheels$enabled()) createPickyWheels$reset();
 		super.destroy();
 	}
-
 	@Unique
-	protected String createPickyWheels$canPullFluidsFrom(BlockState blockState, BlockPos pos) {
-		if (blockState.hasProperty(BlockStateProperties.WATERLOGGED) && blockState.getValue(BlockStateProperties.WATERLOGGED)) return "SOURCE";
-		if (blockState.getBlock() instanceof LiquidBlock) return blockState.getValue(LiquidBlock.LEVEL) == 0 ? "SOURCE" : "FLOWING";
-		if (level != null && blockState.getFluidState().getType() != Fluids.EMPTY && blockState.getCollisionShape(level, pos, CollisionContext.empty()).isEmpty()) {
-			return "SOURCE";
-		}
-		return "NONE";
-	}
+	protected boolean createPickyWheels$canPullFluidsFrom(BlockState blockState, BlockPos pos) {
+		if (blockState.hasProperty(BlockStateProperties.WATERLOGGED) && blockState.getValue(BlockStateProperties.WATERLOGGED)) {
+			return true;
+		} else if (blockState.getBlock() instanceof LiquidBlock) {
+            return blockState.getValue(LiquidBlock.LEVEL) == 0 || (Configuration.WATERWHEELS_ACCEPTS_FLOWING.get()
+					&& (blockState.getValue(LiquidBlock.LEVEL) <= Configuration.WATERWHEELS_MINIMUM_SHALLOWNESS.get()));
+		} else return level != null
+				&& blockState.getFluidState().getType() != Fluids.EMPTY
+				&& blockState.getCollisionShape(level, pos, CollisionContext.empty()).isEmpty();
+    }
 
 	@Unique
 	protected void createPickyWheels$search(Fluid fluid, List<BlockPosEntry> frontier, Set<BlockPos> visited) throws ChunkNotLoadedException {
@@ -143,7 +144,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 			if (fluidState == null || fluidState.isEmpty()) continue;
 
 			Fluid currentFluid = FluidHelper.convertToStill(fluidState.getType());
-			if (!currentFluid.isSame(fluid)) continue;
+			if (!currentFluid.isSame(FluidHelper.convertToStill(fluid))) continue;
 
 			for (Direction side : Iterate.directions) {
 				BlockPos offsetPos = currentPos.relative(side);
@@ -151,7 +152,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 				if (visited.contains(offsetPos) || offsetPos.distSqr(createPickyWheels$root) > maxRangeSq) continue;
 				FluidState nextFluidState = level.getFluidState(offsetPos);
 				if (nextFluidState.isEmpty()) continue;
-				if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(offsetPos), offsetPos), "SOURCE")) {
+				if (createPickyWheels$canPullFluidsFrom(level.getBlockState(offsetPos), offsetPos)) {
 					frontier.add(new BlockPosEntry(offsetPos, entry.distance() + 1));
 				}
 			}
@@ -247,7 +248,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 
         for (BlockPos blockPos : getOffsetsToCheck()) {
             BlockPos targetPos = blockPos.offset(worldPosition);
-            if (Objects.equals(createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos), "SOURCE")) {
+            if (createPickyWheels$canPullFluidsFrom(level.getBlockState(targetPos), targetPos)) {
                 if(Configuration.WATERWHEELS_SOURCE_FLOW.get()) {
                     Vec3 flowAtPos = getFlowVectorAtPosition(targetPos).multiply(wheelPlane);
                     if (flowAtPos.lengthSqr() == 0) continue;
@@ -288,11 +289,6 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	private boolean createPickyWheels$isSubOptimal() {
 		if (createPickyWheels$isOptimal()) return false;
 		return createPickyWheels$biomeRPMMulti > 0 && createPickyWheels$optimalRPMMulti > 0 && flowScore != 0;
-	}
-
-	@Unique
-	private boolean createPickyWheels$isSubOptimalBiome() {
-		return createPickyWheels$biomeRPMMulti > 0 && createPickyWheels$biomeRPMMulti < Configuration.WATERWHEELS_BIOME_RPM_BOOST.get();
 	}
 
 	@Inject(method = "determineAndApplyFlowScore", at = @At("HEAD"), cancellable = true)
@@ -389,7 +385,7 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 	@Shadow public abstract void setFlowScoreAndUpdate(int score);
 	@Shadow protected abstract int getSize();
     @Shadow protected abstract Direction.Axis getAxis();
-    @Shadow public abstract Vec3 getFlowVectorAtPosition(BlockPos targetPos);
+    @Shadow public abstract Vec3 getFlowVectorAtPosition(BlockPos pos);
 	@Shadow protected abstract Set<BlockPos> getOffsetsToCheck();
 	@Shadow public abstract void determineAndApplyFlowScore();
 }
