@@ -236,9 +236,9 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$inBiome = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_WHITELIST);
 		createPickyWheels$biomeBoosted = level.getBiome(worldPosition).is(PickyTags.WATERWHEELS_BOOSTED);
 
-		createPickyWheels$biomeRPMMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_RPM_BOOST.get().floatValue() :
+		float biomeRPMMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_RPM_BOOST.get().floatValue() :
 				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_RPM_PENALTY.get().floatValue() : 0);
-		createPickyWheels$biomeSTRESSMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_STRESS_BOOST.get().floatValue() :
+		float biomeSTRESSMulti = createPickyWheels$biomeBoosted ? Configuration.WATERWHEELS_BIOME_STRESS_BOOST.get().floatValue() :
 				(createPickyWheels$inBiome ? Configuration.WATERWHEELS_BIOME_STRESS_PENALTY.get().floatValue() : 0);
 
 		createPickyWheels$powerSource.clear();
@@ -267,17 +267,36 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		createPickyWheels$root = !createPickyWheels$powerSource.isEmpty() ? createPickyWheels$powerSource.get(0) : worldPosition;
 		createPickyWheels$hasValidSource = createPickyWheels$isPowerSourceViable();
 
+		float optimalRPMMulti, optimalSTRESSMulti;
 		if (createPickyWheels$isOptimal()) {
-			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_BOOST.get().floatValue();
-			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_BOOST.get().floatValue();
+			optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_BOOST.get().floatValue();
+			optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_BOOST.get().floatValue();
 			setFlowScoreAndUpdate(flowS);
 			if (!level.isClientSide()) award(lava ? AllAdvancements.LAVA_WHEEL : AllAdvancements.WATER_WHEEL);
 		} else {
-			createPickyWheels$optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_PENALTY.get().floatValue();
-			createPickyWheels$optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_PENALTY.get().floatValue();
+			optimalRPMMulti = Configuration.WATERWHEELS_SOURCE_RPM_PENALTY.get().floatValue();
+			optimalSTRESSMulti = Configuration.WATERWHEELS_SOURCE_STRESS_PENALTY.get().floatValue();
 		}
 
+		createPickyWheels$setMultiAndUpdate(biomeRPMMulti, biomeSTRESSMulti, optimalRPMMulti, optimalSTRESSMulti);
+
 		return createPickyWheels$isOptimal();
+	}
+
+	@Unique
+	void createPickyWheels$setMultiAndUpdate(float biomeRPMMulti, float biomeSTRESSMulti, float optimalRPMMulti, float optimalSTRESSMulti) {
+		boolean needsUpdate = (biomeRPMMulti != createPickyWheels$biomeRPMMulti) || (biomeSTRESSMulti != createPickyWheels$biomeSTRESSMulti) ||
+				(optimalRPMMulti != createPickyWheels$optimalRPMMulti) || (optimalSTRESSMulti != createPickyWheels$optimalSTRESSMulti);
+
+		createPickyWheels$biomeRPMMulti = biomeRPMMulti;
+		createPickyWheels$biomeSTRESSMulti = biomeSTRESSMulti;
+		createPickyWheels$optimalRPMMulti = optimalRPMMulti;
+		createPickyWheels$optimalSTRESSMulti = optimalSTRESSMulti;
+
+		if (needsUpdate) {
+			updateGeneratedRotation();
+			setChanged();
+		}
 	}
 
 	@Unique
@@ -297,16 +316,17 @@ public abstract class WaterWheelBlockEntityMixin extends GeneratingKineticBlockE
 		if (createPickyWheels$determineViability() || !Configuration.WATERWHEELS_LOSDOS.get()) ci.cancel();
 	}
 
-	@Inject(method = "getGeneratedSpeed", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "getGeneratedSpeed", at = @At("RETURN"), cancellable = true)
 	public void getGeneratedSpeedMixin(CallbackInfoReturnable<Float> cir) {
 		if (!createPickyWheels$enabled()) return;
-		cir.setReturnValue((createPickyWheels$biomeRPMMulti * createPickyWheels$optimalRPMMulti) *
-				Mth.clamp(flowScore, -1, 1) * 8 / getSize());
+		cir.setReturnValue((createPickyWheels$biomeRPMMulti * createPickyWheels$optimalRPMMulti) * cir.getReturnValue());
 	}
 
 	@Override
 	public float calculateAddedStressCapacity() {
-		return (createPickyWheels$biomeSTRESSMulti * createPickyWheels$optimalSTRESSMulti) * super.calculateAddedStressCapacity();
+		float capacity = (createPickyWheels$biomeSTRESSMulti * createPickyWheels$optimalSTRESSMulti) * super.calculateAddedStressCapacity();
+		this.lastCapacityProvided = capacity;
+		return capacity;
 	}
 
 	@Override
